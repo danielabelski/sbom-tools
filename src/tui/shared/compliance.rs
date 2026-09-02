@@ -230,9 +230,9 @@ mod tests {
         );
     }
 
-    /// #347: the reporter's CRA Annex I violation (3 references + a two-line
+    /// #347: the reporter's CRA Annex I violation (3 references + a multi-line
     /// remediation) overflowed the old fixed 60%-height box at 24 rows, so
-    /// the remediation text after "SPDX: use" and the close hint were clipped.
+    /// the end of the remediation text and the close hint were clipped.
     fn cra_supply_chain_violation() -> Violation {
         Violation {
             severity: ViolationSeverity::Warning,
@@ -261,8 +261,8 @@ mod tests {
                 super::render_violation_detail_overlay(frame, frame.area(), &violation);
             });
             assert!(
-                text.contains("DEPENDS_ON") && text.contains("relationships."),
-                "remediation must be fully visible at {width}x{height}; got:\n{text}"
+                text.contains("PackageOriginator).") && text.contains("Remediation:"),
+                "remediation must be fully visible to its last word at {width}x{height}; got:\n{text}"
             );
             assert!(
                 text.contains("Press Enter or Esc to close"),
