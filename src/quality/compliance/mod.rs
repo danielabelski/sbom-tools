@@ -3519,6 +3519,33 @@ mod tests {
         assert_eq!(pren_count, 1, "PRE-7-RQ-07 should appear exactly once");
     }
 
+    /// #347: the SUPPLY-CHAIN rule is emitted only by the supplier checks,
+    /// but its remediation was copied from the DEPENDENCY rule and told the
+    /// user to add DEPENDS_ON relationships.
+    #[test]
+    fn supply_chain_remediation_is_about_suppliers() {
+        let v = Violation {
+            severity: ViolationSeverity::Error,
+            category: ViolationCategory::SupplierInfo,
+            message: String::new(),
+            element: None,
+            requirement: String::new(),
+            rule_id: "SBOM-CRA-ANNEX-I-SUPPLY-CHAIN",
+            component_id: None,
+            counts: None,
+            standard_refs: Vec::new(),
+        };
+        let guidance = v.remediation_guidance();
+        assert!(
+            guidance.contains("supplier") && guidance.contains("PackageSupplier"),
+            "supplier-rule guidance must name the supplier fields; got: {guidance}"
+        );
+        assert!(
+            !guidance.contains("DEPENDS_ON"),
+            "supplier-rule guidance must not be the dependency-relationship text; got: {guidance}"
+        );
+    }
+
     #[test]
     fn registry_refs_for_supply_chain_include_annex_and_pren() {
         let refs = refs_for("SBOM-CRA-ANNEX-I-SUPPLY-CHAIN");

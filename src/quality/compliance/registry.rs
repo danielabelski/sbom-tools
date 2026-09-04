@@ -351,7 +351,10 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
                 (PREN, "PRE-7-RQ-01"),
                 (PREN, "PRE-7-RQ-03"),
             ],
-            remediation: "Add dependency relationships between components. CycloneDX: use the dependencies array. SPDX: use DEPENDS_ON relationships.",
+            // Emitted only by the supplier checks in cra.rs (direct = mandatory,
+            // transitive = recommended); the guidance must talk about suppliers,
+            // not dependency relationships (#347).
+            remediation: "Identify each component's supplier, starting with direct dependencies (mandatory under PRE-7-RQ-03; transitive dependencies are recommended). CycloneDX: set component.supplier (or authors). SPDX: set PackageSupplier (or PackageOriginator).",
         },
         "SBOM-CRA-ANNEX-I-INTEGRITY" => RuleMeta {
             sarif_id: "SBOM-CRA-ANNEX-I",
