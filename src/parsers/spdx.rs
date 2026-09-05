@@ -435,8 +435,7 @@ impl SpdxParser {
                             for attr in e.attributes().filter_map(std::result::Result::ok) {
                                 let attr_name = Self::local_name(attr.key.as_ref());
                                 if attr_name == "about" {
-                                    doc.document_namespace =
-                                        Some(String::from_utf8_lossy(&attr.value).to_string());
+                                    doc.document_namespace = Some(attr.value.to_string());
                                 }
                             }
                         }
@@ -449,7 +448,7 @@ impl SpdxParser {
                             for attr in e.attributes().filter_map(std::result::Result::ok) {
                                 let attr_name = Self::local_name(attr.key.as_ref());
                                 if attr_name == "about" {
-                                    let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                    let uri = attr.value.to_string();
                                     // Extract SPDX ID from URI fragment
                                     if let Some(idx) = uri.rfind('#') {
                                         pkg.spdx_id = uri[idx + 1..].to_string();
@@ -492,7 +491,7 @@ impl SpdxParser {
                             for attr in e.attributes().filter_map(std::result::Result::ok) {
                                 let attr_name = Self::local_name(attr.key.as_ref());
                                 if attr_name == "resource" {
-                                    let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                    let uri = attr.value.to_string();
                                     // Extract license from URI
                                     if let Some(idx) = uri.rfind('/') {
                                         doc.data_license = uri[idx + 1..].to_string();
@@ -507,7 +506,7 @@ impl SpdxParser {
                                 for attr in e.attributes().filter_map(std::result::Result::ok) {
                                     let attr_name = Self::local_name(attr.key.as_ref());
                                     if attr_name == "resource" {
-                                        let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                        let uri = attr.value.to_string();
                                         let id = Self::extract_spdx_id_from_uri(&uri);
                                         if local_name == "spdxElementId" {
                                             rel.spdx_element_id = id;
@@ -523,7 +522,7 @@ impl SpdxParser {
                                 for attr in e.attributes().filter_map(std::result::Result::ok) {
                                     let attr_name = Self::local_name(attr.key.as_ref());
                                     if attr_name == "resource" {
-                                        let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                        let uri = attr.value.to_string();
                                         let license = Self::extract_license_from_uri(&uri);
                                         if local_name == "licenseConcluded" {
                                             pkg.license_concluded = Some(license);
@@ -539,7 +538,7 @@ impl SpdxParser {
                                 for attr in e.attributes().filter_map(std::result::Result::ok) {
                                     let attr_name = Self::local_name(attr.key.as_ref());
                                     if attr_name == "resource" {
-                                        let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                        let uri = attr.value.to_string();
                                         // Extract algorithm from URI like http://spdx.org/rdf/terms#checksumAlgorithm_sha256
                                         if let Some(idx) = uri.rfind("checksumAlgorithm_") {
                                             checksum.algorithm = uri[idx + 18..].to_uppercase();
@@ -555,7 +554,7 @@ impl SpdxParser {
                                 for attr in e.attributes().filter_map(std::result::Result::ok) {
                                     let attr_name = Self::local_name(attr.key.as_ref());
                                     if attr_name == "resource" {
-                                        let uri = String::from_utf8_lossy(&attr.value).to_string();
+                                        let uri = attr.value.to_string();
                                         if let Some(idx) = uri.rfind("referenceCategory_") {
                                             ext_ref.reference_category =
                                                 uri[idx + 18..].to_string();
@@ -570,7 +569,8 @@ impl SpdxParser {
                     }
                 }
                 Ok(Event::Text(ref e)) => {
-                    current_text = e.decode().unwrap_or_default().to_string();
+                    let text: &str = e.as_ref();
+                    current_text = text.to_string();
                 }
                 Ok(Event::End(ref e)) => {
                     let local_name = Self::local_name(e.name().as_ref());
@@ -788,12 +788,9 @@ impl SpdxParser {
     }
 
     /// Extract local name from qualified XML name (strips namespace prefix)
-    fn local_name(name: &[u8]) -> String {
-        let name_str = String::from_utf8_lossy(name);
-        name_str.rfind(':').map_or_else(
-            || name_str.to_string(),
-            |idx| name_str[idx + 1..].to_string(),
-        )
+    fn local_name(name: &str) -> String {
+        name.rfind(':')
+            .map_or_else(|| name.to_string(), |idx| name[idx + 1..].to_string())
     }
 
     /// Extract SPDX ID from URI (e.g., "<http://example.org#SPDXRef-Package>" -> "SPDXRef-Package")
