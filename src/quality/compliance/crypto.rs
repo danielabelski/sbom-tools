@@ -15,8 +15,9 @@
 use super::*;
 use crate::model::{
     AlgorithmClass, AlgorithmClassification, CertificateProperties, Component, CryptoAssetType,
-    NormalizedSbomIndex, PqcKind, ProtocolProperties, ProtocolType, classify_algorithm,
-    classify_algorithm_names, classify_algorithm_names_guarded, worst_classification,
+    Ikev2Transform, NormalizedSbomIndex, PqcKind, ProtocolProperties, ProtocolType,
+    classify_algorithm, classify_algorithm_names, classify_algorithm_names_guarded,
+    ikev2_key_exchange_group, worst_classification,
 };
 
 /// Outcome of checking one classified algorithm against the CNSA 2.0
@@ -78,6 +79,50 @@ fn classify_bom_ref(
             None,
         ),
     }
+}
+
+/// Classify one IKEv2 transform: its algorithm bom-ref when that resolves or
+/// token-matches, else its IANA transform name (with the declared key length
+/// as size evidence, so `ENCR_AES_CBC` + 128 is judged as AES-128), else its
+/// key-exchange group through the IANA registry. `Err` carries the label to
+/// report as unverifiable.
+fn classify_ike_transform(
+    t: &Ikev2Transform,
+    sbom: &NormalizedSbom,
+    index: &NormalizedSbomIndex,
+) -> Result<(AlgorithmClassification, Option<u32>), String> {
+    // The declared key length sizes an otherwise unsized family, so it is
+    // both judged and reported ("AES-128", not "AES").
+    let sized = |mut cls: AlgorithmClassification| {
+        if cls.parameter.is_none() {
+            cls.parameter = t.key_length.map(|k| k.to_string());
+        }
+        cls
+    };
+    if let Some(r) = &t.algorithm_ref {
+        let (cls, bits) = classify_bom_ref(r, sbom, index);
+        if cls.class != AlgorithmClass::Unknown {
+            return Ok((sized(cls), bits.or(t.key_length)));
+        }
+    }
+    if let Some(name) = &t.name
+        && let Some(cls) = worst_classification(classify_algorithm_names_guarded(name))
+        && cls.class != AlgorithmClass::Unknown
+    {
+        return Ok((sized(cls), t.key_length));
+    }
+    if let Some((family, param)) = t.group.and_then(ikev2_key_exchange_group) {
+        return Ok((
+            classify_algorithm(Some(family), None, None, param, None),
+            None,
+        ));
+    }
+    Err(t
+        .algorithm_ref
+        .clone()
+        .or_else(|| t.name.clone())
+        .or_else(|| t.group.map(|g| format!("IKEv2 group {g}")))
+        .unwrap_or_else(|| "(unidentified IKEv2 transform)".to_string()))
 }
 
 /// Resolve a bom-ref to the referenced component, if it exists.
@@ -599,18 +644,10 @@ impl ComplianceChecker {
         // PROTO-002: IKEv2 transform types.
         if let Some(ike) = &proto.ikev2_transform_types {
             let mut offenders = Vec::new();
-            for r in ike
-                .encr
-                .iter()
-                .chain(&ike.prf)
-                .chain(&ike.integ)
-                .chain(&ike.ke)
-            {
-                let (cls, bits) = classify_bom_ref(r, sbom, index);
-                if cls.class == AlgorithmClass::Unknown {
-                    unverifiable.push(r.clone());
-                } else {
-                    record(&cls, bits, &mut offenders);
+            for t in ike.judged_transforms() {
+                match classify_ike_transform(&t, sbom, index) {
+                    Ok((cls, bits)) => record(&cls, bits, &mut offenders),
+                    Err(label) => unverifiable.push(label),
                 }
             }
             push_proto_violation("IKEv2 transforms include".to_string(), offenders);
@@ -1112,18 +1149,10 @@ impl ComplianceChecker {
 
         if let Some(ike) = &proto.ikev2_transform_types {
             let mut offenders = Vec::new();
-            for r in ike
-                .encr
-                .iter()
-                .chain(&ike.prf)
-                .chain(&ike.integ)
-                .chain(&ike.ke)
-            {
-                let (cls, _) = classify_bom_ref(r, sbom, index);
-                if cls.class == AlgorithmClass::Unknown {
-                    unverifiable.push(r.clone());
-                } else {
-                    record(&cls, &mut offenders);
+            for t in ike.judged_transforms() {
+                match classify_ike_transform(&t, sbom, index) {
+                    Ok((cls, _)) => record(&cls, &mut offenders),
+                    Err(label) => unverifiable.push(label),
                 }
             }
             push_proto_violation("IKEv2 transforms include".to_string(), offenders);

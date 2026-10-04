@@ -14,11 +14,12 @@ use crate::model::{
     CryptoFunction, CryptoMaterialState, CryptoMaterialType, CryptoMode, CryptoPadding,
     CryptoPrimitive, CryptoProperties, CvssScore, CvssVersion, DependencyEdge, DependencyScope,
     DependencyType, DocumentMetadata, ExecutionEnvironment, ExternalRefType, ExternalReference,
-    Hash, HashAlgorithm, Ikev2TransformTypes, ImplementationPlatform, LicenseExpression,
-    NormalizedSbom, Organization, Property, ProtocolProperties, ProtocolType, RelatedCryptoAsset,
-    RelatedCryptoMaterialProperties, Remediation, RemediationType, SbomFormat, SecuredBy, Severity,
-    SignatureInfo, VexJustification, VexResponse, VexState, VexStatus, VulnerabilityRef,
-    VulnerabilitySource,
+    Hash, HashAlgorithm, Ikev2Transform, Ikev2TransformKind, Ikev2TransformTypes,
+    ImplementationPlatform, LicenseExpression, NormalizedSbom, Organization, Property,
+    ProtocolProperties, ProtocolType, RelatedCryptoAsset, RelatedCryptoMaterialProperties,
+    Remediation, RemediationType, SbomFormat, SecuredBy, Severity, SignatureInfo, VexJustification,
+    VexResponse, VexState, VexStatus, VulnerabilityRef, VulnerabilitySource,
+    ikev2_key_exchange_group,
 };
 use crate::parsers::traits::{ParseError, SbomParser};
 use chrono::{DateTime, Utc};
@@ -1089,6 +1090,59 @@ impl CycloneDxParser {
         mat
     }
 
+    fn convert_ikev2_transform_types(cdx: &CdxIkev2TransformTypes) -> Ikev2TransformTypes {
+        let lists = [
+            (Ikev2TransformKind::Encr, &cdx.encr),
+            (Ikev2TransformKind::Prf, &cdx.prf),
+            (Ikev2TransformKind::Integ, &cdx.integ),
+            (Ikev2TransformKind::Ke, &cdx.ke),
+            (Ikev2TransformKind::Auth, &cdx.auth),
+        ];
+        let transforms: Vec<Ikev2Transform> = lists
+            .into_iter()
+            .flat_map(|(kind, entries)| {
+                entries.iter().map(move |t| Ikev2Transform {
+                    kind,
+                    name: first_non_blank([&t.name]),
+                    key_length: t.key_length,
+                    group: t.group,
+                    algorithm_ref: first_non_blank([&t.algorithm]),
+                })
+            })
+            .filter(|t| t.name.is_some() || t.group.is_some() || t.algorithm_ref.is_some())
+            .collect();
+
+        // One display/compat identifier per transform: reference, else name,
+        // else the key-exchange group.
+        let ids = |kind: Ikev2TransformKind| -> Vec<String> {
+            transforms
+                .iter()
+                .filter(|t| t.kind == kind)
+                .filter_map(|t| {
+                    t.algorithm_ref
+                        .clone()
+                        .or_else(|| t.name.clone())
+                        .or_else(|| {
+                            t.group.map(|g| match ikev2_key_exchange_group(g) {
+                                Some((family, Some(param))) => format!("{family}-{param}"),
+                                Some((family, None)) => family.to_string(),
+                                None => format!("IKEv2 group {g}"),
+                            })
+                        })
+                })
+                .collect()
+        };
+
+        Ikev2TransformTypes {
+            encr: ids(Ikev2TransformKind::Encr),
+            prf: ids(Ikev2TransformKind::Prf),
+            integ: ids(Ikev2TransformKind::Integ),
+            ke: ids(Ikev2TransformKind::Ke),
+            auth: ids(Ikev2TransformKind::Auth),
+            transforms,
+        }
+    }
+
     fn convert_protocol_properties(cdx: &CdxProtocolProperties) -> ProtocolProperties {
         let protocol_type =
             cdx.protocol_type
@@ -1123,12 +1177,7 @@ impl CycloneDxParser {
         }
 
         if let Some(ike) = &cdx.ikev2_transform_types {
-            proto.ikev2_transform_types = Some(Ikev2TransformTypes {
-                encr: ike.encr.clone().unwrap_or_default(),
-                prf: ike.prf.clone().unwrap_or_default(),
-                integ: ike.integ.clone().unwrap_or_default(),
-                ke: ike.ke.clone().unwrap_or_default(),
-            });
+            proto.ikev2_transform_types = Some(Self::convert_ikev2_transform_types(ike));
         }
 
         // `cryptoRefArray` (1.6) and `relatedCryptographicAssets` (1.7) may
@@ -3137,10 +3186,144 @@ struct CdxCipherSuite {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CdxIkev2TransformTypes {
-    encr: Option<Vec<String>>,
-    prf: Option<Vec<String>>,
-    integ: Option<Vec<String>>,
-    ke: Option<Vec<String>>,
+    #[serde(default)]
+    encr: Vec<CdxIkev2Transform>,
+    #[serde(default)]
+    prf: Vec<CdxIkev2Transform>,
+    #[serde(default)]
+    integ: Vec<CdxIkev2Transform>,
+    #[serde(default)]
+    ke: Vec<CdxIkev2Transform>,
+    /// CycloneDX 1.7.
+    #[serde(default)]
+    auth: Vec<CdxIkev2Transform>,
+}
+
+/// One IKEv2 transform entry. CycloneDX 1.6 gives a bare bom-ref string
+/// (deprecated in 1.7); 1.7 gives an object `{name, keyLength | group,
+/// algorithm}`. In XML the 1.6 form is the element's text. Hand-written
+/// because quick-xml cannot buffer an untagged enum.
+#[derive(Debug, Default)]
+struct CdxIkev2Transform {
+    name: Option<String>,
+    key_length: Option<u32>,
+    group: Option<u32>,
+    algorithm: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for CdxIkev2Transform {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{IgnoredAny, MapAccess, Visitor};
+        use std::fmt;
+
+        struct TransformVisitor;
+
+        impl<'de> Visitor<'de> for TransformVisitor {
+            type Value = CdxIkev2Transform;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an IKEv2 transform bom-ref or object")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> {
+                Ok(CdxIkev2Transform {
+                    algorithm: Some(v.to_string()),
+                    ..CdxIkev2Transform::default()
+                })
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E> {
+                Ok(CdxIkev2Transform::default())
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut t = CdxIkev2Transform::default();
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "name" => t.name = map.next_value()?,
+                        "keyLength" => t.key_length = map.next_value::<LooseU32>()?.0,
+                        "group" => t.group = map.next_value::<LooseU32>()?.0,
+                        // `$text`: an XML element carrying the 1.6 bom-ref.
+                        "algorithm" | "$text" => t.algorithm = map.next_value()?,
+                        _ => {
+                            map.next_value::<IgnoredAny>()?;
+                        }
+                    }
+                }
+                Ok(t)
+            }
+        }
+
+        deserializer.deserialize_any(TransformVisitor)
+    }
+}
+
+/// An integer given as a JSON number or as XML text; anything unparsable or
+/// out of range is `None` rather than failing the document.
+struct LooseU32(Option<u32>);
+
+impl<'de> Deserialize<'de> for LooseU32 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Visitor;
+        use std::fmt;
+
+        struct LooseU32Visitor;
+
+        impl<'de> Visitor<'de> for LooseU32Visitor {
+            type Value = LooseU32;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an unsigned integer")
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> {
+                Ok(LooseU32(u32::try_from(v).ok()))
+            }
+
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> {
+                Ok(LooseU32(u32::try_from(v).ok()))
+            }
+
+            fn visit_f64<E>(self, _: f64) -> Result<Self::Value, E> {
+                Ok(LooseU32(None))
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> {
+                Ok(LooseU32(v.trim().parse().ok()))
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E> {
+                Ok(LooseU32(None))
+            }
+
+            // quick-xml presents an element's text as a `$text` entry.
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                let mut value = None;
+                while let Some(key) = map.next_key::<String>()? {
+                    if key == "$text" {
+                        value = map.next_value::<LooseU32>()?.0;
+                    } else {
+                        map.next_value::<serde::de::IgnoredAny>()?;
+                    }
+                }
+                Ok(LooseU32(value))
+            }
+        }
+
+        deserializer.deserialize_any(LooseU32Visitor)
+    }
 }
 
 // ── Dependencies ────────────────────────────────────────────────────────
@@ -3834,6 +4017,44 @@ mod tests {
 
     /// CDXA was introduced in 1.6: the gate must reject every earlier or
     /// unparseable specVersion and accept 1.6+.
+    /// XML repeats `<encr>`/`<ke>`/… directly under `ikev2TransformTypes`;
+    /// each is the 1.6 bom-ref text or a 1.7 element with child fields.
+    #[test]
+    fn xml_ikev2_transforms_both_forms() {
+        let sbom = parse(
+            r#"<?xml version="1.0"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.7" version="1">
+  <components>
+    <component type="cryptographic-asset" bom-ref="p">
+      <name>ipsec</name>
+      <cryptoProperties><assetType>protocol</assetType>
+        <protocolProperties><type>ikev2</type>
+          <ikev2TransformTypes>
+            <encr><name>ENCR_AES_CBC</name><keyLength>128</keyLength></encr>
+            <encr>legacy-encr-ref</encr>
+            <ke><group>37</group></ke>
+            <esn>true</esn>
+            <auth><name>Digital Signature</name><algorithm>sig</algorithm></auth>
+          </ikev2TransformTypes>
+        </protocolProperties>
+      </cryptoProperties>
+    </component>
+  </components>
+</bom>"#,
+        );
+        let ike = component(&sbom, "ipsec")
+            .crypto_properties
+            .as_ref()
+            .and_then(|cp| cp.protocol_properties.as_ref())
+            .and_then(|p| p.ikev2_transform_types.clone())
+            .expect("IKEv2 transform types");
+        assert_eq!(ike.encr, ["ENCR_AES_CBC", "legacy-encr-ref"]);
+        assert_eq!(ike.ke, ["ML-KEM-1024"]);
+        assert_eq!(ike.auth, ["sig"]);
+        assert_eq!(ike.transforms[0].key_length, Some(128));
+        assert_eq!(ike.transforms[2].group, Some(37));
+    }
+
     /// In XML, `relatedCryptographicAssets` wraps repeated
     /// `<relatedCryptographicAsset>` elements (bom-1.7.xsd), and the 1.6
     /// `<curve>` is read as in JSON. An empty wrapper parses to nothing.
@@ -4493,6 +4714,29 @@ mod tests {
             parsed_curve(r#"{"primitive":"key-agree","curve":""}"#),
             None
         );
+    }
+
+    /// 1.6 string refs and 1.7 objects may be mixed; malformed numbers and
+    /// empty objects are dropped instead of failing the document.
+    #[test]
+    fn ikev2_transforms_tolerate_mixed_and_malformed_entries() {
+        let sbom = parse_json(
+            r#"{"bomFormat":"CycloneDX","specVersion":"1.7","components":[
+                {"type":"cryptographic-asset","name":"ipsec","cryptoProperties":{
+                    "assetType":"protocol","protocolProperties":{"type":"ikev2",
+                    "ikev2TransformTypes":{
+                        "encr":["ref-a",{"name":"ENCR_AES_GCM_16","keyLength":-5},{}],
+                        "ke":[{"group":"19"},{"group":4294967296}]}}}}]}"#,
+        );
+        let ike = component(&sbom, "ipsec")
+            .crypto_properties
+            .as_ref()
+            .and_then(|cp| cp.protocol_properties.as_ref())
+            .and_then(|p| p.ikev2_transform_types.clone())
+            .expect("IKEv2 transform types");
+        assert_eq!(ike.encr, ["ref-a", "ENCR_AES_GCM_16"]);
+        assert_eq!(ike.transforms[1].key_length, None);
+        assert_eq!(ike.ke, ["ECDH-secp256r1"], "out-of-range group dropped");
     }
 
     /// A document mid-migration carries both the deprecated 1.6 ref fields

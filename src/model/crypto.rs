@@ -634,16 +634,125 @@ pub struct CipherSuite {
 }
 
 /// IKEv2 transform types for IPsec protocols (RFC 9370).
+///
+/// The per-type string lists hold one identifier per transform: its
+/// algorithm bom-ref (the CycloneDX 1.6 string form, or the 1.7 object's
+/// `algorithm`), else its IANA transform name, else its key-exchange group
+/// label. [`transforms`](Self::transforms) keeps every transform as declared.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ikev2TransformTypes {
-    /// Encryption algorithm bom-refs.
+    /// Encryption algorithm identifiers (Transform Type 1).
     pub encr: Vec<String>,
-    /// Pseudorandom function bom-refs.
+    /// Pseudorandom function identifiers (Transform Type 2).
     pub prf: Vec<String>,
-    /// Integrity algorithm bom-refs.
+    /// Integrity algorithm identifiers (Transform Type 3).
     pub integ: Vec<String>,
-    /// Key exchange method bom-refs.
+    /// Key exchange method identifiers (Transform Type 4).
     pub ke: Vec<String>,
+    /// Authentication method identifiers (CycloneDX 1.7 `auth`).
+    #[serde(default)]
+    pub auth: Vec<String>,
+    /// Every transform as declared, typed. Empty when the value was built
+    /// from identifier lists alone.
+    #[serde(default)]
+    pub transforms: Vec<Ikev2Transform>,
+}
+
+impl Ikev2TransformTypes {
+    /// The transforms to evaluate: [`transforms`](Self::transforms) when
+    /// present, otherwise one reference-only transform per identifier.
+    #[must_use]
+    pub fn judged_transforms(&self) -> Vec<Ikev2Transform> {
+        if !self.transforms.is_empty() {
+            return self.transforms.clone();
+        }
+        let lists = [
+            (Ikev2TransformKind::Encr, &self.encr),
+            (Ikev2TransformKind::Prf, &self.prf),
+            (Ikev2TransformKind::Integ, &self.integ),
+            (Ikev2TransformKind::Ke, &self.ke),
+            (Ikev2TransformKind::Auth, &self.auth),
+        ];
+        lists
+            .into_iter()
+            .flat_map(|(kind, ids)| {
+                ids.iter().map(move |id| Ikev2Transform {
+                    kind,
+                    name: None,
+                    key_length: None,
+                    group: None,
+                    algorithm_ref: Some(id.clone()),
+                })
+            })
+            .collect()
+    }
+}
+
+/// Which IKEv2 transform list a transform belongs to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Ikev2TransformKind {
+    /// Encryption algorithm (Transform Type 1).
+    Encr,
+    /// Pseudorandom function (Transform Type 2).
+    Prf,
+    /// Integrity algorithm (Transform Type 3).
+    Integ,
+    /// Key exchange method (Transform Type 4).
+    Ke,
+    /// Authentication method.
+    Auth,
+}
+
+/// One IKEv2 transform. CycloneDX 1.6 declares only a bom-ref; 1.7 declares
+/// an object with a name, key length or group, and an optional reference.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Ikev2Transform {
+    /// Transform list this entry belongs to.
+    pub kind: Ikev2TransformKind,
+    /// IANA transform name (e.g. `"ENCR_AES_GCM_16"`).
+    pub name: Option<String>,
+    /// Encryption key length in bits.
+    pub key_length: Option<u32>,
+    /// Key-exchange group identifier (IANA Transform Type 4).
+    pub group: Option<u32>,
+    /// Bom-ref of the algorithm component.
+    pub algorithm_ref: Option<String>,
+}
+
+/// The algorithm family and parameter behind an IKEv2 key-exchange group,
+/// per the IANA "Transform Type 4 - Key Exchange Method Transform IDs"
+/// registry, in terms [`classify_algorithm`] understands. Unassigned and
+/// private-use groups return `None`.
+#[must_use]
+pub fn ikev2_key_exchange_group(group: u32) -> Option<(&'static str, Option<&'static str>)> {
+    Some(match group {
+        1 => ("DH", Some("768")),
+        2 | 22 => ("DH", Some("1024")),
+        5 => ("DH", Some("1536")),
+        14 | 23 | 24 => ("DH", Some("2048")),
+        15 => ("DH", Some("3072")),
+        16 => ("DH", Some("4096")),
+        17 => ("DH", Some("6144")),
+        18 => ("DH", Some("8192")),
+        19 => ("ECDH", Some("secp256r1")),
+        20 => ("ECDH", Some("secp384r1")),
+        21 => ("ECDH", Some("secp521r1")),
+        25 => ("ECDH", Some("secp192r1")),
+        26 => ("ECDH", Some("secp224r1")),
+        27 => ("ECDH", Some("brainpoolP224r1")),
+        28 => ("ECDH", Some("brainpoolP256r1")),
+        29 => ("ECDH", Some("brainpoolP384r1")),
+        30 => ("ECDH", Some("brainpoolP512r1")),
+        31 => ("X25519", None),
+        32 => ("X448", None),
+        33 => ("GOST-R-34.10", Some("256")),
+        34 => ("GOST-R-34.10", Some("512")),
+        35 => ("ML-KEM", Some("512")),
+        36 => ("ML-KEM", Some("768")),
+        37 => ("ML-KEM", Some("1024")),
+        _ => return None,
+    })
 }
 
 /// A typed reference to a related cryptographic asset (CycloneDX 1.7

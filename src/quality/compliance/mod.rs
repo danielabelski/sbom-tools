@@ -3277,6 +3277,8 @@ mod tests {
                         prf: vec!["transform-prf-3".into()],
                         integ: vec!["transform-integ-2".into()],
                         ke: vec!["transform-ke-9".into()],
+                        auth: vec![],
+                        transforms: vec![],
                     },
                 ),
             ),
