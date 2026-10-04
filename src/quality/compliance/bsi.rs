@@ -211,7 +211,7 @@ impl ComplianceChecker {
             // carries supplier/author presence but not reliably their
             // contact, so this is a presence-level check only — hence
             // Warning, not Error.
-            if !has_known_supplier(&comp.supplier, &comp.author) {
+            if !has_known_producer(comp) {
                 without_creator += 1;
             }
 

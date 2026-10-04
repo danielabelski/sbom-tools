@@ -695,7 +695,29 @@ impl CycloneDxParser {
         // Set description
         comp.description.clone_from(&cdx.description);
         comp.group.clone_from(&cdx.group);
-        comp.author.clone_from(&cdx.author);
+        // The deprecated `author` string wins; otherwise the CycloneDX 1.6+
+        // `authors` that replace it, named (or, lacking a name, by email).
+        comp.author = cdx.author.clone().or_else(|| {
+            let names: Vec<&str> = cdx
+                .authors
+                .iter()
+                .flatten()
+                .filter_map(|a| a.name.as_deref().or(a.email.as_deref()))
+                .map(str::trim)
+                .filter(|n| !n.is_empty())
+                .collect();
+            (!names.is_empty()).then(|| names.join("; "))
+        });
+        // As for the supplier, a manufacturer may carry only a URL.
+        comp.manufacturer = cdx
+            .manufacturer
+            .as_ref()
+            .and_then(|m| {
+                m.name
+                    .clone()
+                    .or_else(|| m.url.as_ref().and_then(|u| u.first().cloned()))
+            })
+            .map(Organization::new);
         comp.copyright.clone_from(&cdx.copyright);
 
         // Set 1.7+ fields
@@ -2511,6 +2533,10 @@ struct CdxComponent {
     swhid: Vec<String>,
     description: Option<String>,
     author: Option<String>,
+    /// CycloneDX 1.6+; deprecates `author`.
+    authors: Option<Vec<CdxAuthor>>,
+    /// CycloneDX 1.6+: the organization that created the component.
+    manufacturer: Option<CdxSupplier>,
     copyright: Option<String>,
     licenses: Option<Vec<CdxLicenseChoice>>,
     supplier: Option<CdxSupplier>,
@@ -3470,6 +3496,13 @@ struct CdxMetadataXml {
     component: Option<CdxComponentXml>,
 }
 
+/// `<authors>` wrapper element of an XML component.
+#[derive(Debug, Deserialize)]
+struct CdxAuthorsXml {
+    #[serde(default)]
+    author: Vec<CdxAuthor>,
+}
+
 /// Tools wrapper element for XML format
 #[derive(Debug, Deserialize)]
 struct CdxToolsXml {
@@ -3505,6 +3538,10 @@ struct CdxComponentXml {
     swhid: Vec<String>,
     description: Option<String>,
     author: Option<String>,
+    /// CycloneDX 1.6+; deprecates `author`.
+    authors: Option<CdxAuthorsXml>,
+    /// CycloneDX 1.6+.
+    manufacturer: Option<CdxSupplier>,
     copyright: Option<String>,
     licenses: Option<CdxLicensesXml>,
     supplier: Option<CdxSupplier>,
@@ -3591,6 +3628,8 @@ impl From<CdxComponentXml> for CdxComponent {
             swhid: xml.swhid,
             description: xml.description,
             author: xml.author,
+            authors: xml.authors.map(|w| w.author),
+            manufacturer: xml.manufacturer,
             copyright: xml.copyright,
             licenses,
             supplier: xml.supplier,
@@ -4017,6 +4056,29 @@ mod tests {
 
     /// CDXA was introduced in 1.6: the gate must reject every earlier or
     /// unparseable specVersion and accept 1.6+.
+    /// CycloneDX 1.6+ component `<authors>` and `<manufacturer>` in XML.
+    #[test]
+    fn xml_component_authors_and_manufacturer() {
+        let sbom = parse(
+            r#"<?xml version="1.0"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.6" version="1">
+  <components>
+    <component type="library">
+      <name>lib</name>
+      <manufacturer><name>Maker GmbH</name></manufacturer>
+      <authors><author><name>Jane Dev</name></author><author><name>Joe Dev</name></author></authors>
+    </component>
+  </components>
+</bom>"#,
+        );
+        let lib = component(&sbom, "lib");
+        assert_eq!(lib.author.as_deref(), Some("Jane Dev; Joe Dev"));
+        assert_eq!(
+            lib.manufacturer.as_ref().map(|m| m.name.as_str()),
+            Some("Maker GmbH")
+        );
+    }
+
     /// XML repeats `<encr>`/`<ke>`/… directly under `ikev2TransformTypes`;
     /// each is the 1.6 bom-ref text or a 1.7 element with child fields.
     #[test]

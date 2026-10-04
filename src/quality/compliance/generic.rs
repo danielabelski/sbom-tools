@@ -739,7 +739,7 @@ impl ComplianceChecker {
                     | ComplianceLevel::CraPhase2
                     | ComplianceLevel::CraOssSteward
                     | ComplianceLevel::Comprehensive
-            ) && !has_known_supplier(&comp.supplier, &comp.author)
+            ) && !has_known_producer(comp)
             {
                 let severity = match self.level {
                     ComplianceLevel::CraPhase1

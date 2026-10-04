@@ -366,15 +366,17 @@ impl ComplianceChecker {
             // Component Producer (Error) — the 2026 rename of the ambiguous
             // "Supplier Name". Author/originator (SPDX PackageOriginator) is
             // the closest evidence for "the entity that creates, defines,
-            // and identifies components"; supplier is accepted; an explicit
-            // unknown-provenance marker satisfies the element's escape hatch
-            // ("the SBOM author should explicitly mark the component as of
-            // unknown provenance"). Only silent absence fails.
-            let producer_named = has_known_supplier(&comp.supplier, &comp.author);
+            // and identifies components"; supplier and manufacturer are
+            // accepted; an explicit unknown-provenance marker satisfies the
+            // element's escape hatch ("the SBOM author should explicitly mark
+            // the component as of unknown provenance"). Only silent absence
+            // fails.
+            let producer_named = has_known_producer(comp);
             let producer_marked_unknown = comp
                 .supplier
-                .as_ref()
-                .is_some_and(|s| is_unknown_marker(s.name.trim()))
+                .iter()
+                .chain(&comp.manufacturer)
+                .any(|o| is_unknown_marker(o.name.trim()))
                 || comp
                     .author
                     .as_deref()
@@ -384,8 +386,8 @@ impl ComplianceChecker {
                     severity: ViolationSeverity::Error,
                     category: ViolationCategory::SupplierInfo,
                     message: format!(
-                        "[CISA 2026] Component '{}' names no producer (author/originator or \
-                         supplier) and is not explicitly marked as of unknown provenance",
+                        "[CISA 2026] Component '{}' names no producer (author/originator, \
+                         manufacturer or supplier) and is not explicitly marked as of unknown provenance",
                         comp.name
                     ),
                     element: Some(comp.name.clone()),

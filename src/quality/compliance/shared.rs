@@ -94,16 +94,18 @@ pub(crate) fn has_known_value(value: &Option<String>) -> bool {
     known_value(value.as_deref()).is_some()
 }
 
-/// Whether a component carries real supplier/author attribution: a supplier
-/// organization or author whose name is not a placeholder sentinel.
-pub(crate) fn has_known_supplier(
-    supplier: &Option<crate::model::Organization>,
-    author: &Option<String>,
-) -> bool {
-    supplier
-        .as_ref()
-        .is_some_and(|s| known_value(Some(s.name.as_str())).is_some())
-        || has_known_value(author)
+/// Whether a component carries real producer attribution: a supplier or
+/// manufacturer organization, or an author, whose name is not a placeholder
+/// sentinel. CycloneDX 1.6+ names the creating organization `manufacturer`
+/// (and people `authors`, folded into `author` by the parser); both identify
+/// "the entity that creates, defines, and identifies components" as well as
+/// a supplier does.
+pub(crate) fn has_known_producer(comp: &crate::model::Component) -> bool {
+    let known_org = |org: &Option<crate::model::Organization>| {
+        org.as_ref()
+            .is_some_and(|o| known_value(Some(o.name.as_str())).is_some())
+    };
+    known_org(&comp.supplier) || known_org(&comp.manufacturer) || has_known_value(&comp.author)
 }
 
 /// Simple email format validation (checks basic structure, not full RFC 5322)
