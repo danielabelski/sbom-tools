@@ -322,6 +322,11 @@ pub struct CertificateProperties {
     pub certificate_format: Option<String>,
     /// Certificate file extension (e.g., "pem", "crt", "der").
     pub certificate_extension: Option<String>,
+    /// Typed references to related crypto assets (CycloneDX 1.7
+    /// `relatedCryptographicAssets`, which supersedes the deprecated
+    /// signature-algorithm and public-key refs).
+    #[serde(default)]
+    pub related_crypto_assets: Vec<RelatedCryptoAsset>,
 }
 
 impl CertificateProperties {
@@ -336,7 +341,34 @@ impl CertificateProperties {
             subject_public_key_ref: None,
             certificate_format: None,
             certificate_extension: None,
+            related_crypto_assets: Vec::new(),
         }
+    }
+
+    /// Bom-refs of the algorithm(s) that sign this certificate: the
+    /// `signature_algorithm_ref` followed by every `algorithm`-typed related
+    /// crypto asset, deduplicated in order. A CycloneDX 1.7 certificate may
+    /// list several algorithms and does not say which one signs it, so
+    /// callers that gate on the signature must judge all of them.
+    #[must_use]
+    pub fn signature_algorithm_refs(&self) -> Vec<&str> {
+        let mut refs: Vec<&str> = Vec::new();
+        let related = self
+            .related_crypto_assets
+            .iter()
+            .filter(|a| a.is_type("algorithm"))
+            .map(|a| a.bom_ref.as_str());
+        for r in self
+            .signature_algorithm_ref
+            .as_deref()
+            .into_iter()
+            .chain(related)
+        {
+            if !refs.contains(&r) {
+                refs.push(r);
+            }
+        }
+        refs
     }
 
     /// Returns `true` if the certificate has expired.
@@ -446,6 +478,10 @@ pub struct RelatedCryptoMaterialProperties {
     pub update_date: Option<DateTime<Utc>>,
     /// When the material expires.
     pub expiration_date: Option<DateTime<Utc>>,
+    /// Typed references to related crypto assets (CycloneDX 1.7
+    /// `relatedCryptographicAssets`, which supersedes `algorithmRef`).
+    #[serde(default)]
+    pub related_crypto_assets: Vec<RelatedCryptoAsset>,
 }
 
 impl RelatedCryptoMaterialProperties {
@@ -463,6 +499,7 @@ impl RelatedCryptoMaterialProperties {
             activation_date: None,
             update_date: None,
             expiration_date: None,
+            related_crypto_assets: Vec::new(),
         }
     }
 
@@ -535,8 +572,14 @@ pub struct ProtocolProperties {
     pub cipher_suites: Vec<CipherSuite>,
     /// IKEv2 transform types (for IPsec protocols).
     pub ikev2_transform_types: Option<Ikev2TransformTypes>,
-    /// Bom-refs of related crypto assets used by this protocol.
+    /// Bom-refs of related crypto assets used by this protocol: the
+    /// CycloneDX 1.6 `cryptoRefArray` merged with the refs of the 1.7
+    /// `relatedCryptographicAssets` that supersedes it.
     pub crypto_ref_array: Vec<String>,
+    /// Typed references to related crypto assets (CycloneDX 1.7
+    /// `relatedCryptographicAssets`), as declared.
+    #[serde(default)]
+    pub related_crypto_assets: Vec<RelatedCryptoAsset>,
 }
 
 impl ProtocolProperties {
@@ -548,6 +591,7 @@ impl ProtocolProperties {
             cipher_suites: Vec::new(),
             ikev2_transform_types: None,
             crypto_ref_array: Vec::new(),
+            related_crypto_assets: Vec::new(),
         }
     }
 
@@ -600,6 +644,27 @@ pub struct Ikev2TransformTypes {
     pub integ: Vec<String>,
     /// Key exchange method bom-refs.
     pub ke: Vec<String>,
+}
+
+/// A typed reference to a related cryptographic asset (CycloneDX 1.7
+/// `relatedCryptographicAsset`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RelatedCryptoAsset {
+    /// Declared kind of the related asset (e.g. "algorithm", "publicKey",
+    /// "privateKey"), as written in the document.
+    pub asset_type: Option<String>,
+    /// Bom-ref of the related asset.
+    pub bom_ref: String,
+}
+
+impl RelatedCryptoAsset {
+    /// Whether the declared kind is `kind`, ignoring ASCII case.
+    #[must_use]
+    pub fn is_type(&self, kind: &str) -> bool {
+        self.asset_type
+            .as_deref()
+            .is_some_and(|t| t.trim().eq_ignore_ascii_case(kind))
+    }
 }
 
 /// How a cryptographic material is secured/protected.

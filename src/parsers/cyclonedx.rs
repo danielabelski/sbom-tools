@@ -15,7 +15,7 @@ use crate::model::{
     CryptoPrimitive, CryptoProperties, CvssScore, CvssVersion, DependencyEdge, DependencyScope,
     DependencyType, DocumentMetadata, ExecutionEnvironment, ExternalRefType, ExternalReference,
     Hash, HashAlgorithm, Ikev2TransformTypes, ImplementationPlatform, LicenseExpression,
-    NormalizedSbom, Organization, Property, ProtocolProperties, ProtocolType,
+    NormalizedSbom, Organization, Property, ProtocolProperties, ProtocolType, RelatedCryptoAsset,
     RelatedCryptoMaterialProperties, Remediation, RemediationType, SbomFormat, SecuredBy, Severity,
     SignatureInfo, VexJustification, VexResponse, VexState, VexStatus, VulnerabilityRef,
     VulnerabilitySource,
@@ -997,13 +997,21 @@ impl CycloneDxParser {
             .as_deref()
             .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
             .map(|dt| dt.with_timezone(&Utc));
-        cert.signature_algorithm_ref
-            .clone_from(&cdx.signature_algorithm_ref);
-        cert.subject_public_key_ref
-            .clone_from(&cdx.subject_public_key_ref);
+        cert.related_crypto_assets =
+            convert_related_crypto_assets(&cdx.related_cryptographic_assets);
+        // The deprecated single-ref fields stay populated for consumers that
+        // read them, falling back to the first matching 1.7 typed reference.
+        cert.signature_algorithm_ref = cdx
+            .signature_algorithm_ref
+            .clone()
+            .or_else(|| first_related_ref(&cert.related_crypto_assets, "algorithm"));
+        cert.subject_public_key_ref = cdx
+            .subject_public_key_ref
+            .clone()
+            .or_else(|| first_related_ref(&cert.related_crypto_assets, "publicKey"));
         cert.certificate_format.clone_from(&cdx.certificate_format);
-        cert.certificate_extension
-            .clone_from(&cdx.certificate_extension);
+        cert.certificate_extension =
+            first_non_blank([&cdx.certificate_file_extension, &cdx.certificate_extension]);
         cert
     }
 
@@ -1038,7 +1046,12 @@ impl CycloneDxParser {
         let mut mat = RelatedCryptoMaterialProperties::new(material_type);
         mat.id.clone_from(&cdx.id);
         mat.size = cdx.size;
-        mat.algorithm_ref.clone_from(&cdx.algorithm_ref);
+        mat.related_crypto_assets =
+            convert_related_crypto_assets(&cdx.related_cryptographic_assets);
+        mat.algorithm_ref = cdx
+            .algorithm_ref
+            .clone()
+            .or_else(|| first_related_ref(&mat.related_crypto_assets, "algorithm"));
         mat.format.clone_from(&cdx.format);
 
         if let Some(state) = cdx.state.as_deref() {
@@ -1118,7 +1131,22 @@ impl CycloneDxParser {
             });
         }
 
-        proto.crypto_ref_array = cdx.crypto_ref_array.clone().unwrap_or_default();
+        // `cryptoRefArray` (1.6) and `relatedCryptographicAssets` (1.7) may
+        // both be present while the former is deprecated: judge the union.
+        proto.related_crypto_assets =
+            convert_related_crypto_assets(&cdx.related_cryptographic_assets);
+        let mut refs: Vec<String> = Vec::new();
+        for r in cdx
+            .crypto_ref_array
+            .iter()
+            .flatten()
+            .chain(proto.related_crypto_assets.iter().map(|a| &a.bom_ref))
+        {
+            if !refs.contains(r) {
+                refs.push(r.clone());
+            }
+        }
+        proto.crypto_ref_array = refs;
         proto
     }
 
@@ -2952,7 +2980,108 @@ struct CdxCertificateProperties {
     signature_algorithm_ref: Option<String>,
     subject_public_key_ref: Option<String>,
     certificate_format: Option<String>,
+    /// Deprecated in 1.7 in favor of `certificateFileExtension`.
     certificate_extension: Option<String>,
+    /// CycloneDX 1.7.
+    certificate_file_extension: Option<String>,
+    /// CycloneDX 1.7; supersedes `signatureAlgorithmRef` and
+    /// `subjectPublicKeyRef`.
+    #[serde(default, deserialize_with = "deserialize_related_crypto_assets")]
+    related_cryptographic_assets: Vec<CdxRelatedCryptoAsset>,
+}
+
+/// CycloneDX 1.7 `relatedCryptographicAsset`.
+#[derive(Debug, Deserialize)]
+struct CdxRelatedCryptoAsset {
+    #[serde(rename = "type")]
+    asset_type: Option<String>,
+    #[serde(rename = "ref")]
+    ref_field: Option<String>,
+}
+
+/// `relatedCryptographicAssets` is a bare array in JSON but, in XML, a
+/// wrapper element around repeated `<relatedCryptographicAsset>` children.
+/// Anything else in the wrapper is ignored rather than failing the document.
+fn deserialize_related_crypto_assets<'de, D>(
+    deserializer: D,
+) -> Result<Vec<CdxRelatedCryptoAsset>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::{IgnoredAny, MapAccess, SeqAccess, Visitor};
+    use std::fmt;
+
+    struct RelatedAssetsVisitor;
+
+    impl<'de> Visitor<'de> for RelatedAssetsVisitor {
+        type Value = Vec<CdxRelatedCryptoAsset>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("an array of related cryptographic assets")
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E> {
+            Ok(Vec::new())
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E> {
+            Ok(Vec::new())
+        }
+
+        // An empty XML wrapper element.
+        fn visit_str<E>(self, _: &str) -> Result<Self::Value, E> {
+            Ok(Vec::new())
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            let mut assets = Vec::new();
+            while let Some(asset) = seq.next_element()? {
+                assets.push(asset);
+            }
+            Ok(assets)
+        }
+
+        fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+        where
+            A: MapAccess<'de>,
+        {
+            let mut assets = Vec::new();
+            while let Some(key) = map.next_key::<String>()? {
+                if key == "relatedCryptographicAsset" {
+                    assets.push(map.next_value()?);
+                } else {
+                    map.next_value::<IgnoredAny>()?;
+                }
+            }
+            Ok(assets)
+        }
+    }
+
+    deserializer.deserialize_any(RelatedAssetsVisitor)
+}
+
+/// Typed related-asset references with a usable (non-blank) bom-ref; an
+/// entry without one names nothing that could be resolved or judged.
+fn convert_related_crypto_assets(cdx: &[CdxRelatedCryptoAsset]) -> Vec<RelatedCryptoAsset> {
+    cdx.iter()
+        .filter_map(|a| {
+            Some(RelatedCryptoAsset {
+                asset_type: a.asset_type.clone(),
+                bom_ref: first_non_blank([&a.ref_field])?,
+            })
+        })
+        .collect()
+}
+
+/// The bom-ref of the first related asset of the given kind.
+fn first_related_ref(assets: &[RelatedCryptoAsset], kind: &str) -> Option<String> {
+    assets
+        .iter()
+        .find(|a| a.is_type(kind))
+        .map(|a| a.bom_ref.clone())
 }
 
 #[derive(Debug, Deserialize)]
@@ -2970,6 +3099,9 @@ struct CdxRelatedCryptoMaterialProperties {
     activation_date: Option<String>,
     update_date: Option<String>,
     expiration_date: Option<String>,
+    /// CycloneDX 1.7; supersedes `algorithmRef`.
+    #[serde(default, deserialize_with = "deserialize_related_crypto_assets")]
+    related_cryptographic_assets: Vec<CdxRelatedCryptoAsset>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -2987,7 +3119,11 @@ struct CdxProtocolProperties {
     version: Option<String>,
     cipher_suites: Option<Vec<CdxCipherSuite>>,
     ikev2_transform_types: Option<CdxIkev2TransformTypes>,
+    /// Deprecated in 1.7 in favor of `relatedCryptographicAssets`.
     crypto_ref_array: Option<Vec<String>>,
+    /// CycloneDX 1.7.
+    #[serde(default, deserialize_with = "deserialize_related_crypto_assets")]
+    related_cryptographic_assets: Vec<CdxRelatedCryptoAsset>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -3698,6 +3834,60 @@ mod tests {
 
     /// CDXA was introduced in 1.6: the gate must reject every earlier or
     /// unparseable specVersion and accept 1.6+.
+    /// In XML, `relatedCryptographicAssets` wraps repeated
+    /// `<relatedCryptographicAsset>` elements (bom-1.7.xsd), and the 1.6
+    /// `<curve>` is read as in JSON. An empty wrapper parses to nothing.
+    #[test]
+    fn xml_related_crypto_assets_and_curve() {
+        let sbom = parse(
+            r#"<?xml version="1.0"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.7" version="1">
+  <components>
+    <component type="cryptographic-asset" bom-ref="alg">
+      <name>ka</name>
+      <cryptoProperties><assetType>algorithm</assetType>
+        <algorithmProperties><primitive>key-agree</primitive><curve>secp256r1</curve></algorithmProperties>
+      </cryptoProperties>
+    </component>
+    <component type="cryptographic-asset" bom-ref="c1">
+      <name>cert</name>
+      <cryptoProperties><assetType>certificate</assetType>
+        <certificateProperties><relatedCryptographicAssets>
+          <relatedCryptographicAsset><type>algorithm</type><ref>alg</ref></relatedCryptographicAsset>
+          <relatedCryptographicAsset><type>publicKey</type><ref>pk</ref></relatedCryptographicAsset>
+        </relatedCryptographicAssets></certificateProperties>
+      </cryptoProperties>
+    </component>
+    <component type="cryptographic-asset" bom-ref="c2">
+      <name>empty</name>
+      <cryptoProperties><assetType>certificate</assetType>
+        <certificateProperties><relatedCryptographicAssets/></certificateProperties>
+      </cryptoProperties>
+    </component>
+  </components>
+</bom>"#,
+        );
+        let cp = |name: &str| component(&sbom, name).crypto_properties.clone().unwrap();
+        assert_eq!(
+            cp("ka")
+                .algorithm_properties
+                .unwrap()
+                .elliptic_curve
+                .as_deref(),
+            Some("secp256r1")
+        );
+        let cert = cp("cert").certificate_properties.unwrap();
+        assert_eq!(cert.signature_algorithm_ref.as_deref(), Some("alg"));
+        assert_eq!(cert.subject_public_key_ref.as_deref(), Some("pk"));
+        assert!(
+            cp("empty")
+                .certificate_properties
+                .unwrap()
+                .related_crypto_assets
+                .is_empty()
+        );
+    }
+
     #[test]
     fn cdxa_version_gate() {
         assert!(!cdx_supports_cdxa("1.4"));
@@ -4303,6 +4493,44 @@ mod tests {
             parsed_curve(r#"{"primitive":"key-agree","curve":""}"#),
             None
         );
+    }
+
+    /// A document mid-migration carries both the deprecated 1.6 ref fields
+    /// and the 1.7 `relatedCryptographicAssets`: protocol refs are the
+    /// deduplicated union, explicit 1.6 single refs are kept, 1.7 file
+    /// extension wins, and entries without a usable ref are dropped.
+    #[test]
+    fn related_crypto_assets_merge_with_deprecated_fields() {
+        let sbom = parse_json(
+            r#"{"bomFormat":"CycloneDX","specVersion":"1.7","components":[
+                {"type":"cryptographic-asset","name":"proto","cryptoProperties":{
+                    "assetType":"protocol","protocolProperties":{"type":"tls","version":"1.3",
+                    "cryptoRefArray":["a","b"],
+                    "relatedCryptographicAssets":[{"type":"algorithm","ref":"b"},
+                        {"type":"algorithm","ref":"c"},{"type":"algorithm","ref":" "},
+                        {"type":"algorithm"}]}}},
+                {"type":"cryptographic-asset","name":"cert","cryptoProperties":{
+                    "assetType":"certificate","certificateProperties":{
+                    "signatureAlgorithmRef":"legacy-sig","certificateExtension":"crt",
+                    "certificateFileExtension":"pem",
+                    "relatedCryptographicAssets":[{"type":"Algorithm","ref":"new-sig"},
+                        {"type":"publicKey","ref":"pk"}]}}}]}"#,
+        );
+        let cp = |name: &str| component(&sbom, name).crypto_properties.clone().unwrap();
+
+        let proto = cp("proto").protocol_properties.unwrap();
+        assert_eq!(proto.crypto_ref_array, ["a", "b", "c"]);
+        assert_eq!(
+            proto.related_crypto_assets.len(),
+            2,
+            "ref-less entries dropped"
+        );
+
+        let cert = cp("cert").certificate_properties.unwrap();
+        assert_eq!(cert.signature_algorithm_ref.as_deref(), Some("legacy-sig"));
+        assert_eq!(cert.signature_algorithm_refs(), ["legacy-sig", "new-sig"]);
+        assert_eq!(cert.subject_public_key_ref.as_deref(), Some("pk"));
+        assert_eq!(cert.certificate_extension.as_deref(), Some("pem"));
     }
 
     /// Real-world emitters (and the repo's own demo fixtures) reference
