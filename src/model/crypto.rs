@@ -1557,8 +1557,9 @@ fn classify_oid(oid: &str) -> Option<(&'static str, Option<String>)> {
 ///    last resort ("DES-CBC", "AES-128-CBC", "RSA/ECB/PKCS1Padding"), and
 ///    the most severe mention wins — a mode/padding-qualified family must
 ///    not silently classify as Unknown.
-/// 4. `elliptic_curve` (CycloneDX 1.7): any named curve marks the asset as
-///    classical elliptic-curve crypto.
+/// 4. `elliptic_curve` (CycloneDX 1.7 `ellipticCurve`, or the 1.6 `curve`
+///    it deprecates): any named curve marks the asset as classical
+///    elliptic-curve crypto.
 /// 5. `name`: word-boundary token matching via
 ///    [`classify_algorithm_names_guarded`], used **only** when both
 ///    `family` and `oid` are absent — bounding false positives to assets

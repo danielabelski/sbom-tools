@@ -407,6 +407,54 @@ fn cyclonedx_16_cbom_without_family_fails_both_standards() {
     );
 }
 
+/// CycloneDX 1.6 names the curve `algorithmProperties.curve` (1.7 renamed it
+/// `ellipticCurve`). An asset whose only identity signal is that curve must
+/// be classified as quantum-vulnerable EC, not downgraded to an
+/// unclassifiable Warning (issue #374).
+#[test]
+fn cyclonedx_16_curve_classifies_as_quantum_vulnerable_ec() {
+    let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-1.6-curve.cdx.json")).unwrap();
+
+    let curve_of = |name: &str| {
+        parsed
+            .components
+            .values()
+            .find(|c| c.name == name)
+            .and_then(|c| c.crypto_properties.as_ref())
+            .and_then(|cp| cp.algorithm_properties.as_ref())
+            .and_then(|a| a.elliptic_curve.clone())
+    };
+    assert_eq!(curve_of("key-exchange").as_deref(), Some("secp256r1"));
+    assert_eq!(curve_of("token-signer").as_deref(), Some("secp384r1"));
+
+    let cnsa = ComplianceChecker::new(ComplianceLevel::Cnsa2).check(&parsed);
+    for name in ["key-exchange", "token-signer"] {
+        assert!(
+            cnsa.violations
+                .iter()
+                .any(|v| v.rule_id == "SBOM-CNSA2-ALG-006"
+                    && v.severity == ViolationSeverity::Error
+                    && v.element.as_deref() == Some(name)),
+            "{name} must be a CNSA 2.0 quantum-vulnerable Error: {:?}",
+            cnsa.violations
+        );
+    }
+    assert!(
+        !cnsa
+            .violations
+            .iter()
+            .any(|v| v.rule_id == "SBOM-CNSA2-ALG-UNKNOWN"),
+        "a declared 1.6 curve must not leave the asset unclassifiable: {:?}",
+        cnsa.violations
+    );
+
+    let pqc = ComplianceChecker::new(ComplianceLevel::NistPqc).check(&parsed);
+    assert!(
+        !pqc.is_compliant,
+        "curve-only EC assets must fail PQC readiness"
+    );
+}
+
 /// Protocol assets are now evaluated: the weak-crypto fixture's TLS 1.0
 /// endpoint with RC4/3DES/DES suites must produce protocol violations under
 /// both standards (previously protocols satisfied the inventory gate but got
@@ -561,6 +609,7 @@ fn parse_all_cbom_fixtures_successfully() {
     let fixtures = [
         "cyclonedx/cbom-1.6.cdx.json",
         "cyclonedx/cbom-1.6-no-family.cdx.json",
+        "cyclonedx/cbom-1.6-curve.cdx.json",
         "cyclonedx/cbom-1.7.cdx.json",
         "cyclonedx/cbom-weak-crypto.cdx.json",
         "cyclonedx/cbom-quantum-ready.cdx.json",

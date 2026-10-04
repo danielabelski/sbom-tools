@@ -880,7 +880,9 @@ impl CycloneDxParser {
             .clone_from(&cdx.parameter_set_identifier);
         algo.classical_security_level = cdx.classical_security_level;
         algo.nist_quantum_security_level = cdx.nist_quantum_security_level;
-        algo.elliptic_curve.clone_from(&cdx.elliptic_curve);
+        // CycloneDX 1.7 `ellipticCurve` wins over the 1.6 `curve` it
+        // deprecates; a blank 1.7 value must not hide a real 1.6 one.
+        algo.elliptic_curve = first_non_blank([&cdx.elliptic_curve, &cdx.curve]);
 
         if let Some(mode) = cdx.mode.as_deref() {
             algo.mode = Some(match mode {
@@ -2920,7 +2922,24 @@ struct CdxAlgorithmProperties {
     certification_level: Option<Vec<String>>,
     classical_security_level: Option<u32>,
     nist_quantum_security_level: Option<u8>,
+    /// CycloneDX 1.7 named curve (`ellipticCurve`).
     elliptic_curve: Option<String>,
+    /// CycloneDX 1.6 named curve, deprecated in 1.7 in favor of
+    /// `ellipticCurve`. A separate field rather than a serde alias: a 1.7
+    /// document carrying both keys would otherwise fail as a duplicate.
+    curve: Option<String>,
+}
+
+/// The first candidate that is present and non-blank, trimmed. Used to
+/// merge a CycloneDX 1.7 field with the deprecated 1.6 field it replaces,
+/// in precedence order.
+fn first_non_blank<const N: usize>(candidates: [&Option<String>; N]) -> Option<String> {
+    candidates
+        .into_iter()
+        .flatten()
+        .map(|s| s.trim())
+        .find(|s| !s.is_empty())
+        .map(str::to_string)
 }
 
 #[derive(Debug, Deserialize)]
@@ -4237,6 +4256,53 @@ mod tests {
         CycloneDxParser::new()
             .parse_str(json)
             .expect("JSON should parse")
+    }
+
+    fn parsed_curve(algorithm_properties: &str) -> Option<String> {
+        let sbom = parse_json(&format!(
+            r#"{{"bomFormat":"CycloneDX","specVersion":"1.7",
+                "components":[{{"type":"cryptographic-asset","name":"ka",
+                    "cryptoProperties":{{"assetType":"algorithm",
+                        "algorithmProperties":{algorithm_properties}}}}}]}}"#
+        ));
+        component(&sbom, "ka")
+            .crypto_properties
+            .as_ref()
+            .and_then(|cp| cp.algorithm_properties.as_ref())
+            .and_then(|a| a.elliptic_curve.clone())
+    }
+
+    /// The 1.6 `curve` and the 1.7 `ellipticCurve` that deprecates it both
+    /// populate `elliptic_curve`; when both are present the document still
+    /// parses (no duplicate-field error) and the 1.7 value wins, unless it
+    /// is blank (issue #374).
+    #[test]
+    fn elliptic_curve_reads_16_curve_with_17_precedence() {
+        assert_eq!(
+            parsed_curve(r#"{"primitive":"key-agree","curve":"secp256r1"}"#).as_deref(),
+            Some("secp256r1")
+        );
+        assert_eq!(
+            parsed_curve(r#"{"primitive":"key-agree","ellipticCurve":"secg/secp256r1"}"#)
+                .as_deref(),
+            Some("secg/secp256r1")
+        );
+        assert_eq!(
+            parsed_curve(
+                r#"{"primitive":"key-agree","curve":"secp256r1","ellipticCurve":"secg/secp384r1"}"#
+            )
+            .as_deref(),
+            Some("secg/secp384r1")
+        );
+        assert_eq!(
+            parsed_curve(r#"{"primitive":"key-agree","curve":"secp256r1","ellipticCurve":"  "}"#)
+                .as_deref(),
+            Some("secp256r1")
+        );
+        assert_eq!(
+            parsed_curve(r#"{"primitive":"key-agree","curve":""}"#),
+            None
+        );
     }
 
     /// Real-world emitters (and the repo's own demo fixtures) reference
