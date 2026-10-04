@@ -14,9 +14,9 @@
 
 use super::*;
 use crate::model::{
-    AlgorithmClass, AlgorithmClassification, Component, CryptoAssetType, NormalizedSbomIndex,
-    PqcKind, ProtocolProperties, ProtocolType, classify_algorithm, classify_algorithm_names,
-    classify_algorithm_names_guarded, worst_classification,
+    AlgorithmClass, AlgorithmClassification, CertificateProperties, Component, CryptoAssetType,
+    NormalizedSbomIndex, PqcKind, ProtocolProperties, ProtocolType, classify_algorithm,
+    classify_algorithm_names, classify_algorithm_names_guarded, worst_classification,
 };
 
 /// Outcome of checking one classified algorithm against the CNSA 2.0
@@ -276,11 +276,18 @@ impl ComplianceChecker {
                 CryptoAssetType::Certificate => {
                     // CNSA2-CERT-001: cert must use a CNSA 2.0 signature
                     // algorithm. Only certificates carrying a signature
-                    // algorithm reference are verifiable (and counted).
-                    if let Some(cert) = &cp.certificate_properties
-                        && let Some(sig_ref) = &cert.signature_algorithm_ref
-                    {
+                    // algorithm reference are verifiable (and counted). A
+                    // CycloneDX 1.7 certificate may relate several
+                    // algorithms without naming the signing one: judge all.
+                    let sig_refs = cp
+                        .certificate_properties
+                        .as_ref()
+                        .map(CertificateProperties::signature_algorithm_refs)
+                        .unwrap_or_default();
+                    if !sig_refs.is_empty() {
                         crypto_assets_evaluated += 1;
+                    }
+                    for sig_ref in sig_refs {
                         let (cls, bits) = classify_bom_ref(sig_ref, sbom, &index);
                         match cnsa2_verdict(&cls, bits) {
                             CnsaVerdict::Approved => {}
@@ -718,11 +725,17 @@ impl ComplianceChecker {
                     // PQC-CERT-001: certificate signature algorithm must not be
                     // broken or quantum-vulnerable. Resolved through the
                     // bom-ref index, with a token-match fallback on the raw
-                    // ref string.
-                    if let Some(cert) = &cp.certificate_properties
-                        && let Some(sig_ref) = &cert.signature_algorithm_ref
-                    {
+                    // ref string. Every related signing candidate is judged,
+                    // as for CNSA2-CERT-001.
+                    let sig_refs = cp
+                        .certificate_properties
+                        .as_ref()
+                        .map(CertificateProperties::signature_algorithm_refs)
+                        .unwrap_or_default();
+                    if !sig_refs.is_empty() {
                         crypto_assets_evaluated += 1;
+                    }
+                    for sig_ref in sig_refs {
                         let (cls, _) = classify_bom_ref(sig_ref, sbom, &index);
                         let problem = match cls.class {
                             AlgorithmClass::Broken => Some("broken algorithm (SP 800-131A)"),
