@@ -1343,6 +1343,47 @@ enum VerifyAction {
         )]
         format: TableJsonFormat,
     },
+    /// Validate a versioned pipeline shard receipt
+    Receipt {
+        /// Receipt JSON file (pipeline-shard-receipt/v1)
+        file: PathBuf,
+        /// Output format (table or json)
+        #[arg(
+            short = 'f',
+            long = "output",
+            alias = "format",
+            value_enum,
+            default_value = "table"
+        )]
+        format: TableJsonFormat,
+    },
+    /// Aggregate receipts from a JSON file or directory using a strict policy JSON file.
+    ReceiptAggregate {
+        /// Receipt JSON file, or a directory whose *.json files are all receipts
+        receipts: PathBuf,
+        /// Aggregate policy JSON file (aggregate-policy/v1)
+        #[arg(long)]
+        policy: PathBuf,
+        /// Output format (table or json)
+        #[arg(
+            short = 'f',
+            long = "output",
+            alias = "format",
+            value_enum,
+            default_value = "table"
+        )]
+        format: TableJsonFormat,
+    },
+    /// Generate an unsigned receipt from a strict, digest-free JSON descriptor.
+    ReceiptGenerate {
+        /// Descriptor JSON file (pipeline-shard-receipt-input/v1); relative
+        /// source_root/artifact_root paths resolve against the working directory
+        #[arg(long)]
+        input: PathBuf,
+        /// Path for the new receipt; an existing file is never overwritten
+        #[arg(long)]
+        output: PathBuf,
+    },
 }
 
 /// Arguments for the `license-check` subcommand
@@ -2612,6 +2653,22 @@ fn run() -> Result<()> {
                     model_dir,
                     format: format.as_str().to_string(),
                 },
+                VerifyAction::Receipt { file, format } => cli::VerifyAction::Receipt {
+                    file,
+                    format: format.as_str().to_string(),
+                },
+                VerifyAction::ReceiptAggregate {
+                    receipts,
+                    policy,
+                    format,
+                } => cli::VerifyAction::ReceiptAggregate {
+                    receipts,
+                    policy,
+                    format: format.as_str().to_string(),
+                },
+                VerifyAction::ReceiptGenerate { input, output } => {
+                    cli::VerifyAction::ReceiptGenerate { input, output }
+                }
             };
 
             let exit_code = cli::run_verify(cli_action, cli.quiet)?;
