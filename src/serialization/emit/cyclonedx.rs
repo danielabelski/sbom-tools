@@ -146,6 +146,12 @@ fn emit_component(component: &Component, bom_ref: &str, report: &mut FidelityRep
     if let Some(supplier) = &component.supplier {
         obj.insert("supplier".to_string(), json!({ "name": supplier.name }));
     }
+    if let Some(manufacturer) = &component.manufacturer {
+        obj.insert(
+            "manufacturer".to_string(),
+            json!({ "name": manufacturer.name }),
+        );
+    }
 
     if let Some(licenses) = emit_licenses(component) {
         obj.insert("licenses".to_string(), licenses);

@@ -193,7 +193,7 @@ impl ComplianceChecker {
             // entry is treated as potentially third-party and the finding
             // stays an evidence-limited Warning.
             let is_primary = primary_id.is_some_and(|p| p == id);
-            let supplier_evidence = has_known_supplier(&comp.supplier, &comp.author)
+            let supplier_evidence = has_known_producer(comp)
                 || has_known_value(&comp.group)
                 || comp.ecosystem.is_some();
             if !is_primary && !supplier_evidence {
@@ -260,11 +260,10 @@ impl ComplianceChecker {
                  Complete); the real comparison against the software is assessor work",
                 "PCI DSS v4.0.1 Req. 6.3.2 / TP 6.3.2.b: third-party components enumerated",
             )
-        } else if !non_primary.iter().any(|comp| {
-            has_known_supplier(&comp.supplier, &comp.author)
-                || comp.ecosystem.is_some()
-                || comp.is_external
-        }) {
+        } else if !non_primary
+            .iter()
+            .any(|comp| has_known_producer(comp) || comp.ecosystem.is_some() || comp.is_external)
+        {
             (
                 "[PCI DSS TP 6.3.2.b] No component beyond the primary carries supplier, \
                  ecosystem, or external-dependency evidence, so third-party components cannot \

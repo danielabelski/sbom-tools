@@ -41,7 +41,7 @@ pub use registry::{
 use registry::{REMEDIATION_GENERIC, lookup_static_rule_id};
 pub use selector::StandardSelector;
 use shared::{
-    has_known_supplier, has_known_value, is_valid_email_format, known_component_name, known_value,
+    has_known_producer, has_known_value, is_valid_email_format, known_component_name, known_value,
     manufacturer_scope_components, truncate_list,
 };
 
@@ -3277,6 +3277,8 @@ mod tests {
                         prf: vec!["transform-prf-3".into()],
                         integ: vec!["transform-integ-2".into()],
                         ke: vec!["transform-ke-9".into()],
+                        auth: vec![],
+                        transforms: vec![],
                     },
                 ),
             ),

@@ -671,8 +671,13 @@ pub struct Component {
     pub description: Option<String>,
     /// Copyright text
     pub copyright: Option<String>,
-    /// Author information
+    /// Author information (CycloneDX `author`, or the names of the 1.6+
+    /// `authors` that deprecate it)
     pub author: Option<String>,
+    /// Organization that created the component (CycloneDX 1.6+
+    /// `manufacturer`), as distinct from the supplier that distributes it
+    #[serde(default)]
+    pub manufacturer: Option<Organization>,
     /// Group/namespace (e.g., Maven groupId)
     pub group: Option<String>,
     /// Whether this component is external (expected from environment, not bundled)
@@ -693,6 +698,13 @@ pub struct Component {
 }
 
 impl Component {
+    /// Whether any producer attribution is present: a supplier, an author,
+    /// or a manufacturer.
+    #[must_use]
+    pub const fn has_producer(&self) -> bool {
+        self.supplier.is_some() || self.author.is_some() || self.manufacturer.is_some()
+    }
+
     /// Create a new component with minimal required fields
     #[must_use]
     pub fn new(name: String, format_id: String) -> Self {
@@ -718,6 +730,7 @@ impl Component {
             description: None,
             copyright: None,
             author: None,
+            manufacturer: None,
             group: None,
             is_external: false,
             version_range: None,

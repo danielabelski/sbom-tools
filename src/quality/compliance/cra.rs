@@ -337,7 +337,7 @@ impl ComplianceChecker {
             let mut direct_missing: Vec<String> = Vec::new();
             let mut transitive_missing: Vec<String> = Vec::new();
             for comp in sbom.components.values() {
-                if comp.supplier.is_some() || comp.author.is_some() {
+                if comp.has_producer() {
                     continue;
                 }
                 if direct_ids.contains(&comp.canonical_id) {
@@ -1017,7 +1017,7 @@ impl ComplianceChecker {
 
         for comp in hardware_components {
             // 1) Producer (supplier or author) must be set
-            if comp.supplier.is_none() && comp.author.is_none() {
+            if !comp.has_producer() {
                 violations.push(Violation {
                     severity: ViolationSeverity::Error,
                     category: ViolationCategory::SupplierInfo,

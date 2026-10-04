@@ -262,7 +262,7 @@ impl HashQualityMetrics {
 
         for comp in sbom.components.values() {
             // Vendor-component classification (independent of hash presence)
-            let is_vendor = (comp.supplier.is_some() || comp.author.is_some())
+            let is_vendor = (comp.has_producer())
                 && !matches!(
                     comp.canonical_id.source(),
                     crate::model::IdSource::Synthetic

@@ -544,6 +544,97 @@ fn cyclonedx_17_related_crypto_assets_are_parsed_and_judged() {
     );
 }
 
+/// CycloneDX 1.7 declares IKEv2 transforms as objects (`{name, keyLength,
+/// algorithm}` / `{group, algorithm}`) where 1.6 used bom-ref strings. Such a
+/// CBOM used to fail to parse at all (exit 3). Each transform must now be
+/// judged by its reference, else its IANA name (with `keyLength` as the
+/// size), else its key-exchange group, and the new `auth` list must count.
+#[test]
+fn cyclonedx_17_ikev2_transform_objects_are_parsed_and_judged() {
+    let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-1.7-ikev2-objects.cdx.json"))
+        .expect("a 1.7 CBOM with IKEv2 transform objects must parse");
+
+    let ike = |name: &str| {
+        parsed
+            .components
+            .values()
+            .find(|c| c.name == name)
+            .and_then(|c| c.crypto_properties.as_ref())
+            .and_then(|cp| cp.protocol_properties.as_ref())
+            .and_then(|p| p.ikev2_transform_types.clone())
+            .unwrap_or_else(|| panic!("{name} must carry IKEv2 transform types"))
+    };
+    let legacy = ike("ipsec-legacy");
+    assert_eq!(legacy.encr, ["ENCR_AES_CBC"]);
+    assert_eq!(legacy.ke, ["DH-2048"]);
+    assert_eq!(legacy.auth, ["RSA Digital Signature"]);
+    assert_eq!(legacy.transforms.len(), 5);
+    assert_eq!(legacy.transforms[0].key_length, Some(128));
+    assert_eq!(ike("ipsec-cnsa").integ, ["crypto/algorithm/sha-384"]);
+
+    let messages = |level| {
+        ComplianceChecker::new(level)
+            .check(&parsed)
+            .violations
+            .into_iter()
+            .map(|v| (v.rule_id, v.severity, v.element, v.message))
+            .collect::<Vec<_>>()
+    };
+
+    let cnsa = messages(ComplianceLevel::Cnsa2);
+    let legacy_finding = cnsa
+        .iter()
+        .find(|(rule, sev, el, _)| {
+            *rule == "SBOM-CNSA2-PROTO-002"
+                && *sev == ViolationSeverity::Error
+                && el.as_deref() == Some("ipsec-legacy")
+        })
+        .unwrap_or_else(|| panic!("ipsec-legacy must fail CNSA 2.0: {cnsa:?}"));
+    for offender in ["AES-128", "SHA-1", "DH-2048", "RSA"] {
+        assert!(
+            legacy_finding.3.contains(offender),
+            "{offender} must be named: {}",
+            legacy_finding.3
+        );
+    }
+    assert!(
+        !legacy_finding.3.contains("SHA-384"),
+        "the approved SHA-384 integrity transform must not be an offender: {}",
+        legacy_finding.3
+    );
+    assert!(
+        !cnsa
+            .iter()
+            .any(|(_, _, el, _)| el.as_deref() == Some("ipsec-cnsa")),
+        "AES-256 + SHA-384 + ML-KEM-1024 (group 37) must pass CNSA 2.0: {cnsa:?}"
+    );
+    assert!(
+        cnsa.iter().any(|(rule, sev, el, msg)| {
+            *rule == "SBOM-CNSA2-PROTO-UNKNOWN"
+                && *sev == ViolationSeverity::Warning
+                && el.as_deref() == Some("ipsec-opaque")
+                && msg.contains("IKEv2 group 1000")
+        }),
+        "an unassigned key-exchange group must warn, not pass: {cnsa:?}"
+    );
+
+    let pqc = messages(ComplianceLevel::NistPqc);
+    assert!(
+        pqc.iter().any(|(rule, sev, el, _)| {
+            *rule == "SBOM-PQC-PROTO-002"
+                && *sev == ViolationSeverity::Error
+                && el.as_deref() == Some("ipsec-legacy")
+        }),
+        "ipsec-legacy must fail PQC readiness: {pqc:?}"
+    );
+    assert!(
+        !pqc.iter()
+            .any(|(_, sev, el, _)| *sev == ViolationSeverity::Error
+                && el.as_deref() == Some("ipsec-cnsa")),
+        "ipsec-cnsa must not fail PQC readiness: {pqc:?}"
+    );
+}
+
 /// Protocol assets are now evaluated: the weak-crypto fixture's TLS 1.0
 /// endpoint with RC4/3DES/DES suites must produce protocol violations under
 /// both standards (previously protocols satisfied the inventory gate but got
@@ -701,6 +792,7 @@ fn parse_all_cbom_fixtures_successfully() {
         "cyclonedx/cbom-1.6-curve.cdx.json",
         "cyclonedx/cbom-1.7.cdx.json",
         "cyclonedx/cbom-1.7-related-assets.cdx.json",
+        "cyclonedx/cbom-1.7-ikev2-objects.cdx.json",
         "cyclonedx/cbom-weak-crypto.cdx.json",
         "cyclonedx/cbom-quantum-ready.cdx.json",
         "cyclonedx/cbom-cnsa2-compliant.cdx.json",

@@ -458,7 +458,7 @@ impl ComplianceChecker {
         let without_supplier = sbom
             .components
             .values()
-            .filter(|c| !has_known_supplier(&c.supplier, &c.author))
+            .filter(|c| !has_known_producer(c))
             .count();
         if without_supplier > 0 {
             violations.push(Violation {
