@@ -62,7 +62,7 @@ impl CompletenessMetrics {
         let mut countable = 0;
 
         for comp in sbom.components.values() {
-            if matches!(comp.component_type, crate::model::ComponentType::File) {
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
             countable += 1;
@@ -434,10 +434,11 @@ pub struct IdentifierMetrics {
     pub ecosystems: Vec<String>,
     /// Components missing all identifiers (only name)
     pub missing_all_identifiers: usize,
-    /// File-typed inventory entries excluded from per-component counting
-    /// (denominator plumbing for `quality_score`; not part of the report).
+    /// File and cryptographic-asset entries excluded from per-component
+    /// counting (denominator plumbing for `quality_score`; not part of the
+    /// report).
     #[serde(skip)]
-    pub file_components: usize,
+    pub non_package_components: usize,
 }
 
 impl IdentifierMetrics {
@@ -451,7 +452,7 @@ impl IdentifierMetrics {
         let mut with_swid = 0;
         let mut with_valid_id = 0;
         let mut missing_all = 0;
-        let mut file_components = 0;
+        let mut non_package_components = 0;
         let mut ecosystems = std::collections::HashSet::new();
 
         for comp in sbom.components.values() {
@@ -459,8 +460,8 @@ impl IdentifierMetrics {
             // structurally lack purl/cpe/swid, and counting them cratered
             // identifier coverage for file-cataloguing SBOMs (same exemption
             // as CompletenessMetrics).
-            if matches!(comp.component_type, ComponentType::File) {
-                file_components += 1;
+            if !comp.component_type.is_package_scoped() {
+                non_package_components += 1;
                 continue;
             }
 
@@ -518,7 +519,7 @@ impl IdentifierMetrics {
             components_with_valid_id: with_valid_id,
             ecosystems: ecosystem_list,
             missing_all_identifiers: missing_all,
-            file_components,
+            non_package_components,
         }
     }
 
@@ -528,7 +529,7 @@ impl IdentifierMetrics {
         // File entries are exempt from identifier counting (see from_sbom),
         // so remove them from the denominator too — otherwise a file
         // catalogue dilutes package identifier coverage.
-        let countable = total_components.saturating_sub(self.file_components);
+        let countable = total_components.saturating_sub(self.non_package_components);
         if countable == 0 {
             return 0.0;
         }
@@ -570,10 +571,11 @@ pub struct LicenseMetrics {
     pub copyleft_license_ids: Vec<String>,
     /// Unique licenses found
     pub unique_licenses: Vec<String>,
-    /// File-typed inventory entries excluded from per-component counting
-    /// (denominator plumbing for `quality_score`; not part of the report).
+    /// File and cryptographic-asset entries excluded from per-component
+    /// counting (denominator plumbing for `quality_score`; not part of the
+    /// report).
     #[serde(skip)]
-    pub file_components: usize,
+    pub non_package_components: usize,
 }
 
 impl LicenseMetrics {
@@ -587,7 +589,7 @@ impl LicenseMetrics {
         let mut noassertion = 0;
         let mut deprecated = 0;
         let mut restrictive = 0;
-        let mut file_components = 0;
+        let mut non_package_components = 0;
         let mut licenses = HashSet::new();
         let mut copyleft_ids = HashSet::new();
 
@@ -602,9 +604,9 @@ impl LicenseMetrics {
             // per-component license counting (same exemption as
             // CompletenessMetrics). Their license strings still feed the
             // informational unique/copyleft lists below.
-            let is_file = matches!(comp.component_type, ComponentType::File);
-            if is_file {
-                file_components += 1;
+            let is_non_package = !comp.component_type.is_package_scoped();
+            if is_non_package {
+                non_package_components += 1;
             }
 
             let mut has_real_entry = false;
@@ -638,7 +640,7 @@ impl LicenseMetrics {
                 }
             }
 
-            if is_file {
+            if is_non_package {
                 // Exempt from all per-component counters (license strings
                 // were still collected above).
                 continue;
@@ -683,7 +685,7 @@ impl LicenseMetrics {
             restrictive_licenses: restrictive,
             copyleft_license_ids: copyleft_list,
             unique_licenses: license_list,
-            file_components,
+            non_package_components,
         }
     }
 
@@ -693,7 +695,7 @@ impl LicenseMetrics {
         // File entries are exempt from per-component license counting (see
         // from_sbom), so remove them from the denominator too — otherwise a
         // file catalogue dilutes package license coverage.
-        let countable = total_components.saturating_sub(self.file_components);
+        let countable = total_components.saturating_sub(self.non_package_components);
         if countable == 0 {
             return 0.0;
         }
@@ -910,10 +912,11 @@ pub struct DependencyMetrics {
     pub complexity_level: Option<ComplexityLevel>,
     /// Factor breakdown. `None` when graph analysis skipped.
     pub complexity_factors: Option<ComplexityFactors>,
-    /// File-typed inventory entries excluded from the coverage denominator in
-    /// `quality_score` (denominator plumbing; not part of the report).
+    /// File and cryptographic-asset entries excluded from the coverage
+    /// denominator in `quality_score` (denominator plumbing; not part of the
+    /// report).
     #[serde(skip)]
-    pub file_components: usize,
+    pub non_package_components: usize,
 }
 
 impl DependencyMetrics {
@@ -929,10 +932,10 @@ impl DependencyMetrics {
         // denominator in quality_score (same exemption as
         // CompletenessMetrics). Cycle/orphan penalties for real packages are
         // unchanged.
-        let file_components = sbom
+        let non_package_components = sbom
             .components
             .values()
-            .filter(|c| matches!(c.component_type, ComponentType::File))
+            .filter(|c| !c.component_type.is_package_scoped())
             .count();
 
         // Build adjacency lists using CanonicalId.value() for string keys
@@ -982,7 +985,7 @@ impl DependencyMetrics {
                 software_complexity_index: None,
                 complexity_level: None,
                 complexity_factors: None,
-                file_components,
+                non_package_components,
             };
         }
 
@@ -1021,7 +1024,7 @@ impl DependencyMetrics {
             software_complexity_index: Some(complexity_index),
             complexity_level: Some(complexity_lvl),
             complexity_factors: Some(factors),
-            file_components,
+            non_package_components,
         }
     }
 
@@ -1035,7 +1038,7 @@ impl DependencyMetrics {
         // File entries are not dependency-graph members (see from_sbom), so
         // they are excluded from the coverage denominator — otherwise a file
         // catalogue dilutes package dependency coverage.
-        let countable = total_components.saturating_sub(self.file_components);
+        let countable = total_components.saturating_sub(self.non_package_components);
 
         // Score based on how many components have dependency info. Clamp to
         // 100 BEFORE subtracting penalties: with an N/(N-1) denominator a
@@ -2264,7 +2267,7 @@ mod tests {
         }
 
         let im = IdentifierMetrics::from_sbom(&sbom);
-        assert_eq!(im.file_components, 30);
+        assert_eq!(im.non_package_components, 30);
         assert_eq!(
             im.missing_all_identifiers, 0,
             "exempt files must not count as identifier-less"
@@ -2296,7 +2299,7 @@ mod tests {
         }
 
         let lm = LicenseMetrics::from_sbom(&sbom);
-        assert_eq!(lm.file_components, 30);
+        assert_eq!(lm.non_package_components, 30);
         assert_eq!(lm.with_declared, 1, "files are exempt from counters");
         assert!(
             lm.unique_licenses.contains(&"GPL-2.0-only".to_string()),
@@ -2343,7 +2346,7 @@ mod tests {
         }
 
         let dm = DependencyMetrics::from_sbom(&sbom);
-        assert_eq!(dm.file_components, 30);
+        assert_eq!(dm.non_package_components, 30);
         let score = dm.quality_score(sbom.components.len());
         assert!(
             (score - 100.0).abs() < 0.01,

@@ -216,6 +216,20 @@ pub enum ComponentType {
     Other(String),
 }
 
+impl ComponentType {
+    /// Whether package-level SBOM elements (version, supplier, license,
+    /// unique identifier, hash, dependency-graph membership) apply. File /
+    /// snippet entries are name+hash inventory records and CycloneDX
+    /// `cryptographic-asset`s describe algorithms, keys, certificates and
+    /// protocols — neither is a package, so standards scope those elements
+    /// away from them. A crypto *library* (e.g. OpenSSL typed `library`)
+    /// is still a package.
+    #[must_use]
+    pub const fn is_package_scoped(&self) -> bool {
+        !matches!(self, Self::File | Self::Cryptographic)
+    }
+}
+
 impl std::fmt::Display for ComponentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -596,12 +596,13 @@ impl ComplianceChecker {
                 });
             }
 
-            // File/snippet inventory entries are name+hash records, not
+            // File/snippet inventory entries and cryptographic assets are not
             // packages: the version / unique-identifier / supplier / license
-            // requirements below do not apply to them (NTIA scopes those to
-            // components). Without this carve-out, a file-cataloguing SBOM
-            // emits thousands of spurious Errors and auto-fails compliance.
-            if matches!(comp.component_type, crate::model::ComponentType::File) {
+            // / hash requirements below do not apply to them (NTIA scopes
+            // those to components). Without this carve-out, a file-cataloguing
+            // SBOM emits thousands of spurious Errors and a CBOM fails on
+            // package fields its algorithms and protocols cannot have.
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
 

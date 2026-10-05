@@ -106,8 +106,7 @@ impl ComplianceChecker {
     #[allow(clippy::too_many_lines)]
     pub(crate) fn check_cisa2026(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
         use crate::model::{
-            CompletenessDeclaration, ComponentType, CreatorType, ExternalRefType, HashAlgorithm,
-            HashProvenance,
+            CompletenessDeclaration, CreatorType, ExternalRefType, HashAlgorithm, HashProvenance,
         };
 
         // SBOM Author (Error) — "the name of the entity that creates the
@@ -354,12 +353,12 @@ impl ComplianceChecker {
                 });
             }
 
-            // File/snippet inventory entries are name+hash records, not
-            // packages: the producer / version / identifier / hash / license
-            // elements below do not apply to them (same carve-out as the
-            // NTIA-path checks — without it a file-cataloguing SBOM emits
-            // thousands of spurious Errors).
-            if matches!(comp.component_type, ComponentType::File) {
+            // File/snippet inventory entries (name+hash records) and
+            // cryptographic assets are not packages: the producer / version /
+            // identifier / hash / license elements below do not apply to them
+            // (same carve-out as the NTIA-path checks — without it a
+            // file-cataloguing SBOM emits thousands of spurious Errors).
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
 
