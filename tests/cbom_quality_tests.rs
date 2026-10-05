@@ -136,3 +136,66 @@ fn mixed_sbom_still_holds_packages_to_ntia() {
         );
     }
 }
+
+/// `modp1024` is the IKE name for 1024-bit finite-field DH: it must be
+/// classified (quantum-vulnerable), not reported as unclassifiable.
+#[test]
+fn ike_group_names_are_classified() {
+    let result = ComplianceChecker::new(ComplianceLevel::Cnsa2).check(&sparse_cbom());
+    let modp: Vec<_> = result
+        .violations
+        .iter()
+        .filter(|v| v.element.as_deref() == Some("modp1024"))
+        .collect();
+    assert!(
+        modp.iter()
+            .any(|v| v.rule_id == "SBOM-CNSA2-ALG-006" && v.message.contains("DH-1024")),
+        "modp1024 must be judged as DH-1024: {modp:?}"
+    );
+    assert!(
+        !modp.iter().any(|v| v.rule_id == "SBOM-CNSA2-ALG-UNKNOWN"),
+        "modp1024 is not unclassifiable: {modp:?}"
+    );
+}
+
+/// The quality metrics must count exactly the algorithms the compliance
+/// engine calls broken — `HMAC_SHA1` used to escape a `starts_with` check,
+/// so the score was softer than `validate` on the same file.
+#[test]
+fn quality_weak_count_matches_compliance_verdict() {
+    let sbom = sparse_cbom();
+    let report = QualityScorer::new(ScoringProfile::Cbom).score(&sbom);
+    let cm = &report.cryptography_metrics;
+    let mut weak = cm.weak_algorithm_names.clone();
+    weak.sort();
+    assert_eq!(weak, ["3DES", "HMAC_SHA1"]);
+
+    let broken_by_compliance = ComplianceChecker::new(ComplianceLevel::NistPqc)
+        .check(&sbom)
+        .violations
+        .iter()
+        .filter(|v| v.rule_id == "SBOM-PQC-005")
+        .count();
+    assert_eq!(cm.weak_algorithm_count, broken_by_compliance);
+
+    // modp1024 (DH) is quantum-vulnerable via the shared classifier.
+    assert!(cm.quantum_vulnerable_count >= 1, "{cm:?}");
+}
+
+/// A protocol linked to its algorithms through `relatedCryptographicAssets`
+/// (or `cryptoRefArray` / IKEv2 transforms) counts as linked in the CBOM
+/// refs slot — only cipher suites used to count.
+#[test]
+fn refs_slot_counts_protocol_algorithm_references() {
+    let sbom = parse_sbom(
+        &Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/cyclonedx/cbom-1.7-related-assets.cdx.json"),
+    )
+    .expect("fixture parses");
+    let cm = QualityScorer::new(ScoringProfile::Cbom)
+        .score(&sbom)
+        .cryptography_metrics;
+    assert_eq!(cm.protocols_count, 1);
+    assert_eq!(cm.protocols_with_cipher_suites, 0);
+    assert_eq!(cm.protocols_with_algorithm_refs, 1);
+}

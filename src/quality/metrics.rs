@@ -5,8 +5,9 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::model::{
-    CompletenessDeclaration, ComponentType, CreatorType, CryptoAssetType, CryptoMaterialState,
-    CryptoPrimitive, EolStatus, ExternalRefType, HashAlgorithm, NormalizedSbom, StalenessLevel,
+    AlgorithmClass, CompletenessDeclaration, ComponentType, CreatorType, CryptoAssetType,
+    CryptoMaterialState, CryptoPrimitive, EolStatus, ExternalRefType, HashAlgorithm,
+    NormalizedSbom, StalenessLevel, classify_algorithm,
 };
 use serde::{Deserialize, Serialize};
 
@@ -1775,6 +1776,11 @@ pub struct CryptographyMetrics {
     pub keys_with_algorithm_ref: usize,
     /// Protocols with at least one cipher suite
     pub protocols_with_cipher_suites: usize,
+    /// Protocols linked to the algorithms they use by any means: cipher
+    /// suites, `cryptoRefArray` / `relatedCryptographicAssets`, or IKEv2
+    /// transform types
+    #[serde(default)]
+    pub protocols_with_algorithm_refs: usize,
 
     // --- Key lifecycle (slot 5: Life) ---
     /// Keys with `state` tracked
@@ -1827,29 +1833,45 @@ impl CryptographyMetrics {
                         {
                             m.algorithms_with_security_level += 1;
                         }
-                        // A classical public-key family (RSA/ECDSA/DH/…) is
-                        // quantum-vulnerable on the family alone — real CBOMs
-                        // rarely set nistQuantumSecurityLevel=0, so counting
-                        // only Some(0) let classical crypto escape the penalty.
-                        // NOTE: the compliance checkers use the richer shared
-                        // classifier `crate::model::classify_algorithm` (OID,
-                        // name, curve, alias normalization); these
-                        // family-string helpers are kept here so the metrics
-                        // scoring stays stable.
-                        if algo.is_classical_quantum_vulnerable()
-                            || algo.nist_quantum_security_level == Some(0)
-                        {
-                            m.quantum_vulnerable_count += 1;
-                        } else if algo.is_quantum_safe() {
-                            m.quantum_safe_count += 1;
-                        }
-                        if algo.is_weak_by_name(&comp.name) {
-                            m.weak_algorithm_count += 1;
-                            m.weak_algorithm_names.push(comp.name.clone());
-                        }
                         if algo.is_hybrid_pqc() {
                             m.hybrid_pqc_count += 1;
                         }
+                    }
+
+                    // Weakness / quantum posture come from the same shared
+                    // classifier the compliance checkers use (family, OID,
+                    // name, curve, alias normalization), unioned with the
+                    // declared-field helpers — so the quality score cannot
+                    // be softer than `validate` on the same file (a name
+                    // like "HMAC_SHA1" escaped the old `starts_with` check).
+                    let algo = cp.algorithm_properties.as_ref();
+                    let cls = classify_algorithm(
+                        algo.and_then(|a| a.algorithm_family.as_deref()),
+                        Some(&comp.name),
+                        cp.oid.as_deref(),
+                        algo.and_then(|a| a.parameter_set_identifier.as_deref()),
+                        algo.and_then(|a| a.elliptic_curve.as_deref()),
+                    );
+                    // A classical public-key family (RSA/ECDSA/DH/…) is
+                    // quantum-vulnerable on the family alone — real CBOMs
+                    // rarely set nistQuantumSecurityLevel=0.
+                    if cls.class == AlgorithmClass::ClassicalQuantumVulnerable
+                        || algo.is_some_and(|a| {
+                            a.is_classical_quantum_vulnerable()
+                                || a.nist_quantum_security_level == Some(0)
+                        })
+                    {
+                        m.quantum_vulnerable_count += 1;
+                    } else if matches!(cls.class, AlgorithmClass::PostQuantum(_))
+                        || algo.is_some_and(|a| a.is_quantum_safe())
+                    {
+                        m.quantum_safe_count += 1;
+                    }
+                    if cls.class == AlgorithmClass::Broken
+                        || algo.is_some_and(|a| a.is_weak_by_name(&comp.name))
+                    {
+                        m.weak_algorithm_count += 1;
+                        m.weak_algorithm_names.push(comp.name.clone());
                     }
                 }
                 CryptoAssetType::Certificate => {
@@ -1922,10 +1944,16 @@ impl CryptographyMetrics {
                 }
                 CryptoAssetType::Protocol => {
                     m.protocols_count += 1;
-                    if let Some(proto) = &cp.protocol_properties
-                        && !proto.cipher_suites.is_empty()
-                    {
-                        m.protocols_with_cipher_suites += 1;
+                    if let Some(proto) = &cp.protocol_properties {
+                        if !proto.cipher_suites.is_empty() {
+                            m.protocols_with_cipher_suites += 1;
+                        }
+                        if !proto.cipher_suites.is_empty()
+                            || !proto.crypto_ref_array.is_empty()
+                            || proto.ikev2_transform_types.is_some()
+                        {
+                            m.protocols_with_algorithm_refs += 1;
+                        }
                     }
                 }
                 _ => {}
@@ -1998,7 +2026,7 @@ impl CryptographyMetrics {
         if linkable > 0 {
             let resolved = self.certs_with_signature_algo_ref
                 + self.keys_with_algorithm_ref
-                + self.protocols_with_cipher_suites;
+                + self.protocols_with_algorithm_refs;
             let unresolved_pct = 1.0 - (resolved as f32 / linkable as f32);
             score -= unresolved_pct * 30.0;
         }
@@ -2057,7 +2085,7 @@ impl CryptographyMetrics {
         }
         let resolved = self.certs_with_signature_algo_ref
             + self.keys_with_algorithm_ref
-            + self.protocols_with_cipher_suites;
+            + self.protocols_with_algorithm_refs;
         let pct = resolved as f32 / linkable as f32;
         (pct * 100.0).clamp(0.0, 100.0)
     }
@@ -3229,6 +3257,7 @@ mod tests {
             certs_with_signature_algo_ref: 2,
             keys_with_algorithm_ref: 3,
             protocols_with_cipher_suites: 1,
+            protocols_with_algorithm_refs: 1,
             ..Default::default()
         };
         assert!((m.crypto_dependency_score() - 100.0).abs() < 0.1);

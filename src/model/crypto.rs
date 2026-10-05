@@ -1365,14 +1365,16 @@ fn alias_lookup(token: &str) -> Option<(&'static str, Option<&'static str>, bool
             ("RSA", None)
         }
         "DSA" | "DSS" => ("DSA", None),
-        "DH" | "DHE" | "FFDHE" | "EDH" | "ADH" | "DIFFIE-HELLMAN" => ("DH", None),
-        "ECDH" | "ECDHE" | "XDH" => ("ECDH", None),
+        // MODP: the IKE / RFC 3526 finite-field groups ("modp1024", "MODP-2048").
+        "DH" | "DHE" | "FFDHE" | "EDH" | "ADH" | "DIFFIE-HELLMAN" | "MODP" => ("DH", None),
+        // ECP: the IKE random-ECP groups over the NIST curves ("ecp256").
+        "ECDH" | "ECDHE" | "XDH" | "ECP" => ("ECDH", None),
         "ECDSA" => ("ECDSA", None),
         "EDDSA" => ("EDDSA", None),
         "ED25519" => ("ED25519", None),
         "ED448" => ("ED448", None),
-        "X25519" => ("X25519", None),
-        "X448" => ("X448", None),
+        "X25519" | "CURVE25519" => ("X25519", None),
+        "X448" | "CURVE448" => ("X448", None),
         "ELGAMAL" | "EL-GAMAL" => ("ELGAMAL", None),
         "ECIES" => ("ECIES", None),
         "ECMQV" => ("ECMQV", None),
@@ -1544,7 +1546,8 @@ fn is_overgeneric_span(span: &str) -> bool {
     let base = span
         .trim_end_matches(|c: char| c.is_ascii_digit())
         .trim_end_matches('-');
-    matches!(base, "SEED" | "EC" | "ECC")
+    // A bare "ECP" (no group size) is too generic to read as the IKE group.
+    matches!(base, "SEED" | "EC" | "ECC") || span == "ECP"
 }
 
 fn classify_names_impl(name: &str, guarded: bool) -> Vec<AlgorithmClassification> {
