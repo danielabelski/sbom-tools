@@ -1117,7 +1117,8 @@ impl std::fmt::Display for CryptoMaterialState {
     }
 }
 
-/// Cryptographic protocol type.
+/// Cryptographic protocol type. The CycloneDX 1.7 `protocolType` values
+/// (`tls` … `5g-aka`) plus earlier, non-spec spellings still accepted.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum ProtocolType {
@@ -1131,8 +1132,33 @@ pub enum ProtocolType {
     Ikev2,
     Zrtp,
     Mikey,
+    /// Internet Key Exchange (CycloneDX `ike`; the version carries v1/v2).
+    Ike,
+    /// Secure Socket Tunneling Protocol.
+    Sstp,
+    /// Wi-Fi Protected Access.
+    Wpa,
+    /// QUIC.
+    Quic,
+    /// EAP-AKA (RFC 4187).
+    EapAka,
+    /// EAP-AKA' (RFC 9048).
+    EapAkaPrime,
+    /// Privacy-preserving roaming identity (3GPP PRINS).
+    Prins,
+    /// 5G Authentication and Key Agreement.
+    FiveGAka,
     Other(String),
     Unknown,
+}
+
+impl ProtocolType {
+    /// Whether this is IKE or IPsec, the protocols that carry IKEv2
+    /// transform types.
+    #[must_use]
+    pub const fn is_ike_family(&self) -> bool {
+        matches!(self, Self::Ike | Self::Ikev1 | Self::Ikev2 | Self::Ipsec)
+    }
 }
 
 impl std::fmt::Display for ProtocolType {
@@ -1148,6 +1174,14 @@ impl std::fmt::Display for ProtocolType {
             Self::Ikev2 => write!(f, "ikev2"),
             Self::Zrtp => write!(f, "zrtp"),
             Self::Mikey => write!(f, "mikey"),
+            Self::Ike => write!(f, "ike"),
+            Self::Sstp => write!(f, "sstp"),
+            Self::Wpa => write!(f, "wpa"),
+            Self::Quic => write!(f, "quic"),
+            Self::EapAka => write!(f, "eap-aka"),
+            Self::EapAkaPrime => write!(f, "eap-aka-prime"),
+            Self::Prins => write!(f, "prins"),
+            Self::FiveGAka => write!(f, "5g-aka"),
             Self::Other(s) => write!(f, "{s}"),
             Self::Unknown => write!(f, "unknown"),
         }
@@ -1331,14 +1365,16 @@ fn alias_lookup(token: &str) -> Option<(&'static str, Option<&'static str>, bool
             ("RSA", None)
         }
         "DSA" | "DSS" => ("DSA", None),
-        "DH" | "DHE" | "FFDHE" | "EDH" | "ADH" | "DIFFIE-HELLMAN" => ("DH", None),
-        "ECDH" | "ECDHE" | "XDH" => ("ECDH", None),
+        // MODP: the IKE / RFC 3526 finite-field groups ("modp1024", "MODP-2048").
+        "DH" | "DHE" | "FFDHE" | "EDH" | "ADH" | "DIFFIE-HELLMAN" | "MODP" => ("DH", None),
+        // ECP: the IKE random-ECP groups over the NIST curves ("ecp256").
+        "ECDH" | "ECDHE" | "XDH" | "ECP" => ("ECDH", None),
         "ECDSA" => ("ECDSA", None),
         "EDDSA" => ("EDDSA", None),
         "ED25519" => ("ED25519", None),
         "ED448" => ("ED448", None),
-        "X25519" => ("X25519", None),
-        "X448" => ("X448", None),
+        "X25519" | "CURVE25519" => ("X25519", None),
+        "X448" | "CURVE448" => ("X448", None),
         "ELGAMAL" | "EL-GAMAL" => ("ELGAMAL", None),
         "ECIES" => ("ECIES", None),
         "ECMQV" => ("ECMQV", None),
@@ -1510,7 +1546,8 @@ fn is_overgeneric_span(span: &str) -> bool {
     let base = span
         .trim_end_matches(|c: char| c.is_ascii_digit())
         .trim_end_matches('-');
-    matches!(base, "SEED" | "EC" | "ECC")
+    // A bare "ECP" (no group size) is too generic to read as the IKE group.
+    matches!(base, "SEED" | "EC" | "ECC") || span == "ECP"
 }
 
 fn classify_names_impl(name: &str, guarded: bool) -> Vec<AlgorithmClassification> {

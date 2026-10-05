@@ -29,7 +29,7 @@
 //! see `PCIDSS_SARIF_RULE_IDS`).
 
 use super::*;
-use crate::model::{CompletenessDeclaration, ComponentType, ExternalRefType, Severity};
+use crate::model::{CompletenessDeclaration, ExternalRefType, Severity};
 
 /// Tool-policy staleness threshold for the Req. 6.3.2 "is maintained"
 /// advisory. PCI DSS text prescribes no regeneration cadence; this cutoff is
@@ -113,7 +113,7 @@ impl ComplianceChecker {
     fn check_pci_components(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
         let primary_id = sbom.primary_component_id.as_ref();
         for (id, comp) in &sbom.components {
-            if matches!(comp.component_type, ComponentType::File) {
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
 
@@ -246,9 +246,7 @@ impl ComplianceChecker {
         let non_primary: Vec<_> = sbom
             .components
             .iter()
-            .filter(|(id, comp)| {
-                *id != primary_id && !matches!(comp.component_type, ComponentType::File)
-            })
+            .filter(|(id, comp)| *id != primary_id && comp.component_type.is_package_scoped())
             .map(|(_, comp)| comp)
             .collect();
 
@@ -584,7 +582,7 @@ mod tests {
     fn file_components_are_exempt_from_per_component_rules() {
         let mut sbom = conforming_sbom();
         let mut file = Component::new("src/main.c".to_string(), "ref-file-1".to_string());
-        file.component_type = ComponentType::File;
+        file.component_type = crate::model::ComponentType::File;
         // No version, no identifier, no supplier — and still clean.
         push(&mut sbom, file);
         let violations = run(&sbom);

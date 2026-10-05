@@ -160,7 +160,9 @@ impl ScoringProfile {
             Self::Cra => ComplianceLevel::CraPhase2,
             Self::BsiTr03183_2 => ComplianceLevel::BsiTr03183_2,
             Self::Comprehensive => ComplianceLevel::Comprehensive,
-            Self::Cbom => ComplianceLevel::Comprehensive,
+            // A CBOM is judged on its cryptography, not on package fields
+            // (Comprehensive ran only generic package checks).
+            Self::Cbom => ComplianceLevel::NistPqc,
             Self::AiReadiness => ComplianceLevel::Comprehensive,
         }
     }
@@ -654,6 +656,13 @@ impl QualityScorer {
             // `vulnerability_score` below) so a zero-algorithm CBOM neither
             // earns a free 100-weighted category nor a punitive 0.
             let pqc_score = cm.pqc_readiness_score();
+            // License coverage only means something for package components;
+            // a pure CBOM (all crypto assets) has none, so the slot is N/A
+            // and reweighted away rather than scored 0.
+            let has_packages = sbom
+                .components
+                .values()
+                .any(|c| c.component_type.is_package_scoped());
             (
                 [
                     true,                // Crpt
@@ -663,7 +672,7 @@ impl QualityScorer {
                     true,                // Life
                     pqc_score.is_some(), // PQC
                     true,                // Prov
-                    true,                // Lic
+                    has_packages,        // Lic
                 ],
                 [
                     cm.crypto_completeness_score(), // slot 1: Crpt
@@ -1625,7 +1634,10 @@ mod tests {
         );
 
         // Recompute the reweighted aggregate: PQC (index 5) excluded, its
-        // weight redistributed proportionally across the other seven slots.
+        // weight redistributed proportionally across the remaining slots.
+        // License (index 7) is N/A too: a pure CBOM has no package
+        // components for license coverage to describe.
+        let excluded = |i: usize| i == 5 || i == 7;
         let w = ScoringProfile::Cbom.weights().as_array();
         let scores = [
             cm.crypto_completeness_score(),
@@ -1635,19 +1647,19 @@ mod tests {
             cm.crypto_lifecycle_score(),
             0.0, // PQC: N/A, excluded
             report.provenance_score,
-            report.license_score,
+            0.0, // License: N/A (no package components), excluded
         ];
         let available_weight: f32 = w
             .iter()
             .enumerate()
-            .filter(|&(i, _)| i != 5)
+            .filter(|&(i, _)| !excluded(i))
             .map(|(_, wt)| wt)
             .sum();
         let expected: f32 = scores
             .iter()
             .zip(w.iter())
             .enumerate()
-            .filter(|&(i, _)| i != 5)
+            .filter(|&(i, _)| !excluded(i))
             .map(|(_, (s, wt))| s * (wt / available_weight))
             .sum();
         assert!(

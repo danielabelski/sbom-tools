@@ -377,7 +377,8 @@ sbom-tools timeline v1.json v2.json v3.json --enrich-vulns
 # Enrich an SBOM with vulnerability + EOL data
 sbom-tools enrich app.cdx.json --enrich-vulns --enrich-eol -O enriched.json
 
-# Grade cryptographic inventory quality
+# Grade cryptographic inventory quality (crypto metadata + NIST PQC readiness;
+# package fields like version/supplier/license are not required of crypto assets)
 sbom-tools quality cbom.cdx.json --profile cbom
 
 # View CBOM with crypto-specific tabs

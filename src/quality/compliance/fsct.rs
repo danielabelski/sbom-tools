@@ -61,8 +61,8 @@
 
 use super::*;
 use crate::model::{
-    CanonicalId, CompletenessDeclaration, Component, ComponentType, CreatorType, DependencyType,
-    ExternalRefType, HashAlgorithm, HashProvenance, SbomFormat,
+    CanonicalId, CompletenessDeclaration, Component, CreatorType, DependencyType, ExternalRefType,
+    HashAlgorithm, HashProvenance, SbomFormat,
 };
 use std::collections::HashSet;
 
@@ -244,9 +244,10 @@ impl FsctEvidence {
                 nameless += 1;
             }
 
-            // File/snippet inventory entries are exempt from the remaining
-            // per-component baseline attributes (see field doc above).
-            if matches!(comp.component_type, ComponentType::File) {
+            // File/snippet entries and cryptographic assets are exempt from
+            // the remaining per-component baseline attributes (see field doc
+            // above).
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
             pkg_total += 1;
@@ -429,7 +430,7 @@ impl FsctEvidence {
             let Some(comp) = sbom.components.get(*id) else {
                 continue;
             };
-            if matches!(comp.component_type, ComponentType::File) {
+            if !comp.component_type.is_package_scoped() {
                 continue;
             }
             let has_children = sbom.edges.iter().any(|e| &&e.from == id);
