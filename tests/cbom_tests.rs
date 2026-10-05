@@ -635,6 +635,62 @@ fn cyclonedx_17_ikev2_transform_objects_are_parsed_and_judged() {
     );
 }
 
+/// A protocol that declares only its type and version still cannot be
+/// judged (no algorithms), so the UNKNOWN warning stays — but it must
+/// acknowledge the declared version and name exactly what is missing,
+/// never claim "no version" (issue #370). The 1.7 `ike` / `quic` protocol
+/// types are recognized, not passed through as opaque strings.
+#[test]
+fn protocol_unknown_warning_acknowledges_declared_version() {
+    use sbom_tools::model::ProtocolType;
+
+    let parsed = parse_sbom(&fixture_path(
+        "cyclonedx/cbom-1.7-protocol-versions.cdx.json",
+    ))
+    .unwrap();
+    let proto_type = |name: &str| {
+        parsed
+            .components
+            .values()
+            .find(|c| c.name == name)
+            .and_then(|c| c.crypto_properties.as_ref())
+            .and_then(|cp| cp.protocol_properties.as_ref())
+            .map(|p| p.protocol_type.clone())
+    };
+    assert_eq!(proto_type("IKEv1"), Some(ProtocolType::Ike));
+    assert_eq!(proto_type("QUIC"), Some(ProtocolType::Quic));
+
+    for (level, rule) in [
+        (ComplianceLevel::Cnsa2, "SBOM-CNSA2-PROTO-UNKNOWN"),
+        (ComplianceLevel::NistPqc, "SBOM-PQC-PROTO-UNKNOWN"),
+    ] {
+        let result = ComplianceChecker::new(level).check(&parsed);
+        let message = |name: &str| {
+            result
+                .violations
+                .iter()
+                .find(|v| v.rule_id == rule && v.element.as_deref() == Some(name))
+                .map(|v| v.message.clone())
+                .unwrap_or_else(|| panic!("{rule} for {name}: {:?}", result.violations))
+        };
+        let ike = message("IKEv1");
+        assert!(ike.contains("(ike 1.0)"), "{ike}");
+        assert!(ike.contains("IKEv2 transform types"), "{ike}");
+        assert!(!ike.contains("no version"), "{ike}");
+
+        let ssh = message("SSH");
+        assert!(ssh.contains("(ssh 2.0)"), "{ssh}");
+        assert!(
+            ssh.contains("cipher suites or algorithm references"),
+            "{ssh}"
+        );
+        assert!(!ssh.contains("IKEv2"), "{ssh}");
+
+        let quic = message("QUIC");
+        assert!(quic.contains("(quic, no version)"), "{quic}");
+    }
+}
+
 /// Protocol assets are now evaluated: the weak-crypto fixture's TLS 1.0
 /// endpoint with RC4/3DES/DES suites must produce protocol violations under
 /// both standards (previously protocols satisfied the inventory gate but got
@@ -793,6 +849,7 @@ fn parse_all_cbom_fixtures_successfully() {
         "cyclonedx/cbom-1.7.cdx.json",
         "cyclonedx/cbom-1.7-related-assets.cdx.json",
         "cyclonedx/cbom-1.7-ikev2-objects.cdx.json",
+        "cyclonedx/cbom-1.7-protocol-versions.cdx.json",
         "cyclonedx/cbom-weak-crypto.cdx.json",
         "cyclonedx/cbom-quantum-ready.cdx.json",
         "cyclonedx/cbom-cnsa2-compliant.cdx.json",

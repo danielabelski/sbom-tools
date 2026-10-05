@@ -287,6 +287,25 @@ fn tls_version_below(version: &str, min: (u32, u32)) -> bool {
 }
 
 /// Whether a protocol asset is SSL (obsolete under every profile here).
+/// Why a protocol offers nothing to evaluate: what it does declare (type
+/// and version) and exactly which evaluable fields are absent. A declared
+/// version alone names no algorithm, so the asset still cannot be judged —
+/// but the message must not claim the version is missing.
+fn unevaluable_protocol_detail(comp_name: &str, proto: &ProtocolProperties) -> String {
+    let declared = match proto.version.as_deref().map(str::trim) {
+        Some(v) if !v.is_empty() => format!("{} {v}", proto.protocol_type),
+        _ => format!("{}, no version", proto.protocol_type),
+    };
+    let missing = if proto.protocol_type.is_ike_family() {
+        "cipher suites, algorithm references (cryptoRefArray / \
+         relatedCryptographicAssets) or IKEv2 transform types"
+    } else {
+        "cipher suites or algorithm references (cryptoRefArray / \
+         relatedCryptographicAssets)"
+    };
+    format!("Protocol '{comp_name}' ({declared}) declares no {missing}")
+}
+
 fn is_ssl_protocol(proto: &ProtocolProperties) -> bool {
     matches!(&proto.protocol_type, ProtocolType::Other(s) if s.to_lowercase().contains("ssl"))
 }
@@ -715,10 +734,8 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::CryptographyInfo,
                 message: format!(
-                    "Protocol '{}' documents no version, cipher suites, or algorithm \
-                     references; protocol algorithms cannot be verified against the \
-                     CNSA 2.0 allowlist",
-                    comp.name
+                    "{}; its algorithms cannot be verified against the CNSA 2.0 allowlist",
+                    unevaluable_protocol_detail(&comp.name, proto)
                 ),
                 element: Some(comp.name.clone()),
                 requirement: "CNSA 2.0: protocol algorithm identification".to_string(),
@@ -1218,9 +1235,8 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::CryptographyInfo,
                 message: format!(
-                    "Protocol '{}' documents no version, cipher suites, or algorithm \
-                     references; protocol algorithms cannot be verified for PQC readiness",
-                    comp.name
+                    "{}; its algorithms cannot be verified for PQC readiness",
+                    unevaluable_protocol_detail(&comp.name, proto)
                 ),
                 element: Some(comp.name.clone()),
                 requirement: "IR 8547: protocol algorithm identification".to_string(),
