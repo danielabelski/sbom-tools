@@ -349,6 +349,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -366,10 +367,20 @@ jobs:
           done
           echo "Uploading ${#ASSETS[@]} assets:"
           printf '  %s\n' "${ASSETS[@]}"
-          gh release create "${{ github.ref_name }}" \
+          # Curated notes are committed as RELEASE_NOTES_<tag>.md in the tagged
+          # tree; fall back to GitHub's generated PR list when there are none.
+          NOTES_FILE="RELEASE_NOTES_${TAG}.md"
+          if [[ -s "${NOTES_FILE}" ]]; then
+            echo "Release notes: ${NOTES_FILE}"
+            NOTES_ARGS=(--notes-file "${NOTES_FILE}")
+          else
+            echo "::warning::${NOTES_FILE} is missing or empty; using generated release notes"
+            NOTES_ARGS=(--generate-notes)
+          fi
+          gh release create "${TAG}" \
             "${ASSETS[@]}" \
-            --title "${{ github.ref_name }}" \
-            --generate-notes \
+            --title "${TAG}" \
+            "${NOTES_ARGS[@]}" \
             --verify-tag
 
   update-homebrew:
