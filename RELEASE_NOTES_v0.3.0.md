@@ -16,7 +16,7 @@ Alongside the CBOM work: **`convert --to normalized`** exposes the full normaliz
 
 - **CycloneDX 1.7 IKEv2 transforms.** Both the 1.6 bom-ref string and the 1.7 object parse, in JSON and XML. CNSA 2.0 and PQC `PROTO-002` judge each transform by its algorithm reference, IANA name or key-exchange group, including the ML-KEM groups 35–37; a transform that cannot be identified reports `PROTO-UNKNOWN` rather than passing. (#380)
 - **Crypto fields are read in both their 1.6 and 1.7 spellings** — the curve, a certificate's signature algorithm and public key, a key material's algorithm, and protocol refs (`cryptoRefArray` / `relatedCryptographicAssets`). A 1.7 certificate that relates several algorithms has every candidate judged, failing closed. (#378)
-- **Crypto assets are not packages.** Version, supplier, license, hash and identifier checks no longer apply to `cryptographic-asset` components in any standard or quality metric, and `quality --profile cbom` embeds **NIST PQC** compliance instead of Comprehensive, which ran no crypto checks. (#382)
+- **Crypto assets are not packages.** Version, supplier, license, hash and identifier checks no longer apply to `cryptographic-asset` components under NTIA, FDA, Standard, Comprehensive, CISA 2026, PCI DSS and FSCT, or in the quality metrics, and `quality --profile cbom` embeds **NIST PQC** compliance instead of Comprehensive, which ran no crypto checks. (#382)
 - **One algorithm classifier** for `quality` and `validate`, so the two agree: `HMAC_SHA1` counts as weak, and IKE groups (`MODPnnnn`, `ECPnnn`, `curve25519`, `curve448`) are classified. The CycloneDX 1.7 protocol types `ike`, `quic`, `wpa`, `sstp`, `eap-aka`, `eap-aka-prime`, `prins` and `5g-aka` are recognised rather than falling through to `Other`. (#382)
 
 ### CLI
@@ -49,7 +49,7 @@ Alongside the CBOM work: **`convert --to normalized`** exposes the full normaliz
 These behaviors changed in this release. `CHANGELOG.md` carries the full list with details.
 
 - **Some CBOM gates are stricter.** A 1.6 EC asset identified only by `curve` now fails `ALG-006`, 1.7 certificates and protocols linked through `relatedCryptographicAssets` are now evaluated, and 1.7 IPsec CBOMs that failed to parse are now judged. A passing `validate` run can now exit `1`.
-- **Other gates are looser.** Crypto assets no longer get package findings under NTIA, FDA, CRA, Standard, Comprehensive, CISA 2026, PCI DSS or FSCT, and a named `manufacturer` or `authors` now satisfies supplier rules. A failing run can now exit `0`.
+- **Other gates are looser.** Crypto assets no longer get package findings under NTIA, FDA, Standard, Comprehensive, CISA 2026, PCI DSS or FSCT, and a named `manufacturer` or `authors` now satisfies supplier rules. A failing run can now exit `0`.
 - **`quality --profile cbom` reports NIST PQC compliance** instead of Comprehensive, and CBOM scores move in both directions — the #370 fixture goes from 42.1 to 37.2.
 - **JSON gains fields, additively:** `cryptography_metrics.protocols_with_algorithm_refs` in quality output; `related_crypto_assets`, component `manufacturer`, and IKEv2 `auth` and `transforms` in the normalized payload.
 - **Library API:** `Component` gains `manufacturer` and `Ikev2TransformTypes` gains `auth` and `transforms`; code that builds them with struct literals must add the fields. `ProtocolType` gains eight variants.
