@@ -178,6 +178,17 @@ source: tests/compliance_snapshots.rs
               "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
             },
             {
+              "id": "SBOM-CRA-INVENTORY",
+              "name": "CraInventory",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (1): SBOM inventories the product's software components"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
               "id": "SBOM-CRA-DOC-INTEGRITY",
               "name": "CraDocumentIntegrity",
               "shortDescription": {
@@ -347,6 +358,17 @@ source: tests/compliance_snapshots.rs
               "name": "BsiTr03183ComponentVersion",
               "shortDescription": {
                 "text": "BSI TR-03183-2 §5.2.2: Component version (fallback: RFC 3339 modification date)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-INVENTORY",
+              "name": "BsiTr03183Inventory",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: SBOM lists at least one component"
               },
               "defaultConfiguration": {
                 "level": "error"

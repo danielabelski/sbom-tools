@@ -19,7 +19,7 @@ use crate::model::{
     ProtocolProperties, ProtocolType, RelatedCryptoAsset, RelatedCryptoMaterialProperties,
     Remediation, RemediationType, SbomFormat, SecuredBy, Severity, SignatureInfo, VexJustification,
     VexResponse, VexState, VexStatus, VulnerabilityRef, VulnerabilitySource,
-    ikev2_key_exchange_group,
+    ikev2_key_exchange_group, is_usable_purl,
 };
 use crate::parsers::traits::{ParseError, SbomParser};
 use chrono::{DateTime, Utc};
@@ -144,14 +144,14 @@ impl CycloneDxParser {
         if let Some(meta) = &cdx.metadata
             && let Some(meta_comp) = &meta.component
         {
-            let comp = self.convert_component(meta_comp);
+            let mut comp = self.convert_component(meta_comp);
             let bom_ref = meta_comp
                 .bom_ref
                 .clone()
                 .unwrap_or_else(|| comp.name.clone());
-            let canonical_id = comp.canonical_id.clone();
+            let canonical_id = sbom.claim_canonical_id(&mut comp);
             id_map.insert(bom_ref, canonical_id.clone());
-            if let Some(purl) = &meta_comp.purl {
+            if let Some(purl) = meta_comp.purl.as_ref().filter(|p| is_usable_purl(p)) {
                 purl_fallbacks.push((purl.clone(), canonical_id.clone()));
             }
             primary_id = Some(canonical_id.clone());
@@ -230,7 +230,7 @@ impl CycloneDxParser {
         }
         while let Some((parent, mut cdx_comp)) = comp_stack.pop() {
             let children = cdx_comp.components.take();
-            let comp = self.convert_component(&cdx_comp);
+            let mut comp = self.convert_component(&cdx_comp);
             let bom_ref = cdx_comp
                 .bom_ref
                 .clone()
@@ -243,9 +243,9 @@ impl CycloneDxParser {
                 };
                 scope_map.insert(bom_ref.clone(), scope);
             }
-            let canonical_id = comp.canonical_id.clone();
+            let canonical_id = sbom.claim_canonical_id(&mut comp);
             id_map.insert(bom_ref, canonical_id.clone());
-            if let Some(purl) = &cdx_comp.purl {
+            if let Some(purl) = cdx_comp.purl.as_ref().filter(|p| is_usable_purl(p)) {
                 purl_fallbacks.push((purl.clone(), canonical_id.clone()));
             }
             if let Some(parent_id) = parent {
@@ -273,9 +273,9 @@ impl CycloneDxParser {
         }
         while let Some((parent, mut svc)) = svc_stack.pop() {
             let children = svc.services.take();
-            let comp = self.convert_service(&svc);
+            let mut comp = self.convert_service(&svc);
             let bom_ref = svc.bom_ref.clone().unwrap_or_else(|| comp.name.clone());
-            let canonical_id = comp.canonical_id.clone();
+            let canonical_id = sbom.claim_canonical_id(&mut comp);
             id_map.insert(bom_ref, canonical_id.clone());
             if let Some(parent_id) = parent {
                 sbom.add_edge(DependencyEdge::new(
@@ -601,9 +601,9 @@ impl CycloneDxParser {
             other => ComponentType::Other(other.to_string()),
         };
 
-        // Set CPEs
+        // Set CPEs (validated; refreshes the canonical ID)
         if let Some(cpe) = &cdx.cpe {
-            comp.identifiers.cpe.push(cpe.clone());
+            comp.add_cpe(cpe.clone());
         }
 
         // Set SWHIDs (CycloneDX 1.6+, CRA [PRE-7-RQ-07])

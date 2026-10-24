@@ -325,25 +325,25 @@ impl Spdx3Parser {
         let mut id_map: HashMap<String, CanonicalId> = HashMap::new();
 
         for (pkg, kind) in &packages {
-            let comp = self.convert_package(pkg, *kind, &agent_map);
+            let mut comp = self.convert_package(pkg, *kind, &agent_map);
             let spdx_id = pkg.spdx_id.clone().unwrap_or_else(|| comp.name.clone());
-            id_map.insert(spdx_id, comp.canonical_id.clone());
+            id_map.insert(spdx_id, sbom.claim_canonical_id(&mut comp));
             sbom.add_component(comp);
         }
 
         // Convert files to components
         for file in &files {
-            let comp = self.convert_file(file);
+            let mut comp = self.convert_file(file);
             let spdx_id = file.spdx_id.clone().unwrap_or_else(|| comp.name.clone());
-            id_map.insert(spdx_id, comp.canonical_id.clone());
+            id_map.insert(spdx_id, sbom.claim_canonical_id(&mut comp));
             sbom.add_component(comp);
         }
 
         // Convert snippets to components (Phase 2)
         for snippet in &snippets {
-            let comp = self.convert_snippet(snippet);
+            let mut comp = self.convert_snippet(snippet);
             let spdx_id = snippet.spdx_id.clone().unwrap_or_else(|| comp.name.clone());
-            id_map.insert(spdx_id, comp.canonical_id.clone());
+            id_map.insert(spdx_id, sbom.claim_canonical_id(&mut comp));
             sbom.add_component(comp);
         }
 
@@ -604,7 +604,7 @@ impl Spdx3Parser {
             for ext_id in ext_ids {
                 match ext_id.external_identifier_type.as_deref() {
                     Some("cpe23") | Some("cpe22") => {
-                        comp.identifiers.cpe.push(ext_id.identifier.clone());
+                        comp.add_cpe(ext_id.identifier.clone());
                     }
                     Some("swid") => {
                         comp.identifiers.swid = Some(ext_id.identifier.clone());

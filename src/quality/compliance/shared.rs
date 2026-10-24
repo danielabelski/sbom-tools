@@ -1,6 +1,63 @@
 //! Small shared helpers reused across the compliance checkers.
 
-use crate::model::{Component, NormalizedSbom};
+use super::{Violation, ViolationCategory, ViolationSeverity};
+use crate::model::{Component, ComponentType, NormalizedSbom};
+
+/// The inventory-absent finding for `rule_id`, or `None` when the SBOM lists
+/// at least one package-scoped component.
+///
+/// Package rules (version, supplier, identifier, hash, license) only judge
+/// package-scoped components, so a document with no components at all — or
+/// with only files, snippets or cryptographic assets — used to pass them
+/// vacuously, scoring like a perfect SBOM. Every standard that judges a
+/// software inventory reports that instead, as PCI DSS already did. The
+/// primary component counts: a leaf application with no dependencies is a
+/// legitimate inventory.
+pub(crate) fn inventory_absent_violation(
+    sbom: &NormalizedSbom,
+    rule_id: &'static str,
+    requirement: &str,
+) -> Option<Violation> {
+    if sbom
+        .components
+        .values()
+        .any(|c| c.component_type.is_package_scoped())
+    {
+        return None;
+    }
+    let total = sbom.components.len();
+    let message = if total == 0 {
+        "SBOM lists no components; an empty document is not a software inventory".to_string()
+    } else {
+        let all_crypto = sbom
+            .components
+            .values()
+            .all(|c| c.component_type == ComponentType::Cryptographic);
+        let what = if all_crypto {
+            "cryptographic assets"
+        } else {
+            "files, snippets or cryptographic assets"
+        };
+        let mut message = format!(
+            "SBOM lists no software components, only {total} {what}; it is not a software inventory"
+        );
+        if all_crypto {
+            message.push_str(" (validate a CBOM with --standard cnsa2 or pqc)");
+        }
+        message
+    };
+    Some(Violation {
+        severity: ViolationSeverity::Error,
+        category: ViolationCategory::DocumentMetadata,
+        message,
+        element: None,
+        requirement: requirement.to_string(),
+        rule_id,
+        component_id: None,
+        counts: None,
+        standard_refs: Vec::new(),
+    })
+}
 
 /// Components whose external references can carry manufacturer-level
 /// evidence (security contact, CVD policy, disclosure process): the primary

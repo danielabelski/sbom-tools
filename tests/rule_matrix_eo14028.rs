@@ -57,6 +57,18 @@ fn eo14028_conforming_fixture_is_compliant_with_zero_violations() {
 #[test]
 fn eo14028_rule_matrix_is_exhaustive_with_firing_and_silent_cases() {
     let entries = vec![
+        // No software component at all (no primary, no components): the
+        // per-component rules have nothing to judge, which is a finding.
+        RuleEntry::tested(
+            "SBOM-EO14028-INVENTORY",
+            Sev::Error,
+            broken(|s| {
+                s.primary = None;
+                s.components.clear();
+                s.dependencies.clear();
+            }),
+            base(),
+        ),
         RuleEntry::tested(
             "SBOM-EO14028-TIMESTAMP",
             Sev::Error,

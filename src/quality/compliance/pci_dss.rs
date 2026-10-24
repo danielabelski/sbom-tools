@@ -64,21 +64,15 @@ impl ComplianceChecker {
     /// describes. An empty or headless document cannot serve as the
     /// Req. 6.3.2 inventory.
     fn check_pci_inventory(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
-        if sbom.components.is_empty() {
-            violations.push(Violation {
-                severity: ViolationSeverity::Error,
-                category: ViolationCategory::DocumentMetadata,
-                message: "[PCI DSS 6.3.2] SBOM inventories no components at all; an empty \
-                          document cannot serve as the Req. 6.3.2 software inventory"
-                    .to_string(),
-                element: None,
-                requirement: "PCI DSS v4.0.1 Req. 6.3.2 / TP 6.3.2.b: non-empty software inventory"
-                    .to_string(),
-                rule_id: "SBOM-PCI-6-3-2-INVENTORY",
-                component_id: None,
-                counts: None,
-                standard_refs: Vec::new(),
-            });
+        // A file- or crypto-only document is no software inventory either:
+        // the per-component rules exempt those entries, so it used to pass.
+        if let Some(mut absent) = inventory_absent_violation(
+            sbom,
+            "SBOM-PCI-6-3-2-INVENTORY",
+            "PCI DSS v4.0.1 Req. 6.3.2 / TP 6.3.2.b: non-empty software inventory",
+        ) {
+            absent.message = format!("[PCI DSS 6.3.2] {}", absent.message);
+            violations.push(absent);
         } else if sbom.primary_component().is_none() {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,

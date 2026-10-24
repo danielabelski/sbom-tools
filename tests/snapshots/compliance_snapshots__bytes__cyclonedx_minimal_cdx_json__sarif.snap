@@ -24,6 +24,17 @@ source: tests/compliance_snapshots.rs
               "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
             },
             {
+              "id": "SBOM-NTIA-INVENTORY",
+              "name": "NtiaInventory",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: SBOM inventories at least one software component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
               "id": "SBOM-NTIA-NAME",
               "name": "NtiaComponentName",
               "shortDescription": {
@@ -193,6 +204,17 @@ source: tests/compliance_snapshots.rs
               "name": "Cisa2026ComponentProducer",
               "shortDescription": {
                 "text": "CISA 2026: Component Producer — entity that creates, defines, and identifies the component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-CISA2026-INVENTORY",
+              "name": "Cisa2026Inventory",
+              "shortDescription": {
+                "text": "CISA 2026: SBOM enumerates at least one software component"
               },
               "defaultConfiguration": {
                 "level": "error"

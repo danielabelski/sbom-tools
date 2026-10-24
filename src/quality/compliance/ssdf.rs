@@ -197,6 +197,14 @@ impl ComplianceChecker {
     pub(crate) fn check_nist_ssdf(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
         use crate::model::ExternalRefType;
 
+        // PS.3.2 provenance data must cover the release's components; the
+        // per-component practices below have nothing to judge without one.
+        violations.extend(inventory_absent_violation(
+            sbom,
+            "SBOM-SSDF-INVENTORY",
+            "NIST SSDF PS.3.2: provenance data for the release's components",
+        ));
+
         // CDXA attestation evidence (CycloneDX 1.6 declarations): fresh,
         // fully-resolved machine-readable support for SSDF practices,
         // evaluated at the injectable clock. Evidence only strengthens —

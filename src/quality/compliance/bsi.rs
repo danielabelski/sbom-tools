@@ -50,6 +50,14 @@ impl ComplianceChecker {
             CompletenessDeclaration, CreatorType, HashAlgorithm, HashProvenance, SbomFormat,
         };
 
+        // §5.2.2 per-component fields have nothing to judge without a
+        // package-scoped component.
+        violations.extend(inventory_absent_violation(
+            sbom,
+            "SBOM-BSI-TR-03183-2-INVENTORY",
+            "BSI TR-03183-2 §5.2.2: component inventory",
+        ));
+
         // §4 — Format eligibility gate. A newly generated or updated SBOM
         // MUST be CycloneDX >= 1.6 or SPDX >= 3.0.1 (JSON or XML). The §7
         // transitional grace for the immediately preceding TR version

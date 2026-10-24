@@ -77,6 +77,18 @@ fn broken(mutate: impl FnOnce(&mut SbomFixture)) -> SbomFixture {
 #[test]
 fn cisa2026_rule_matrix_is_exhaustive_with_firing_and_silent_cases() {
     let entries = vec![
+        // No software component at all (no primary, no components): the
+        // per-component rules have nothing to judge, which is a finding.
+        RuleEntry::tested(
+            "SBOM-CISA2026-INVENTORY",
+            Sev::Error,
+            broken(|s| {
+                s.primary = None;
+                s.components.clear();
+                s.dependencies.clear();
+            }),
+            base(),
+        ),
         RuleEntry::tested(
             "SBOM-CISA2026-AUTHOR",
             Sev::Error,
