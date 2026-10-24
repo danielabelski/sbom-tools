@@ -247,3 +247,33 @@ fn non_package_components_never_draw_package_findings() {
         offenders.join("\n  ")
     );
 }
+
+/// Source scan: compliance checks never use the raw presence test
+/// `Component::has_producer`, which lets a NOASSERTION supplier satisfy a
+/// rule (review finding V4). They use the sentinel-aware
+/// `has_known_producer`.
+#[test]
+fn checkers_never_use_the_raw_producer_test() {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/quality/compliance");
+    let mut offenders = Vec::new();
+    for entry in std::fs::read_dir(&dir).expect("compliance sources") {
+        let path = entry.expect("dir entry").path();
+        if path.extension().is_none_or(|e| e != "rs") {
+            continue;
+        }
+        let src = std::fs::read_to_string(&path).expect("readable source");
+        let code = src.split("#[cfg(test)]").next().unwrap_or_default();
+        for (n, line) in code.lines().enumerate() {
+            let trimmed = line.trim_start();
+            if !trimmed.starts_with("//") && line.contains(".has_producer(") {
+                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                offenders.push(format!("{name}:{}: {}", n + 1, trimmed));
+            }
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "raw has_producer() in compliance code; use has_known_producer:\n  {}",
+        offenders.join("\n  ")
+    );
+}

@@ -93,44 +93,12 @@ const fn completeness_undeclared(declaration: &CompletenessDeclaration) -> bool 
     )
 }
 
-/// Ambiguous placeholder values that neither populate a baseline attribute
-/// nor explicitly declare no-assertion/no-value. The explicit sentinels
-/// (`NOASSERTION`, `NONE`, `UNKNOWN`) are deliberately NOT in this list —
-/// §2.3.1 sanctions them as the graceful way to differentiate "no
-/// assertion" (data missing) from "no value" (not applicable). Curated
-/// conservatively so genuine values are never flagged.
-fn is_ambiguous_placeholder(value: &str) -> bool {
-    const AMBIGUOUS: &[&str] = &[
-        "tbd",
-        "to be determined",
-        "todo",
-        "n/a",
-        "n.a.",
-        "placeholder",
-        "unspecified",
-        "not specified",
-        "not available",
-        "unavailable",
-        "null",
-        "nil",
-        "undefined",
-        "xxx",
-        "-",
-        "--",
-        "?",
-    ];
-    let lower = value.trim().to_ascii_lowercase();
-    AMBIGUOUS.contains(&lower.as_str())
-}
-
-/// Whether the component carries at least one real (non-sentinel) license
-/// expression, declared or concluded.
-fn has_known_license(comp: &Component) -> bool {
-    comp.licenses
-        .all_licenses()
-        .into_iter()
-        .any(|l| known_value(Some(l.expression.as_str())).is_some())
-}
+// Ambiguous placeholders (§2.3.1) are `shared::is_placeholder`: values that
+// neither populate a baseline attribute nor explicitly declare
+// no-assertion/no-value. The explicit sentinels (`NOASSERTION`, `NONE`,
+// `UNKNOWN`) are deliberately not on that list — §2.3.1 sanctions them as
+// the graceful way to differentiate "no assertion" (data missing) from "no
+// value" (not applicable).
 
 /// Whether the component positively asserted it has no dependencies
 /// (CycloneDX dependency entry with an empty `dependsOn`, preserved by the
@@ -323,19 +291,15 @@ impl FsctEvidence {
                 without_copyright.push(comp.name.clone());
             }
 
-            // §2.3.1: ambiguous placeholders (see `is_ambiguous_placeholder`).
+            // §2.3.1: ambiguous placeholders (see `is_placeholder`).
             let mut fields = Vec::new();
-            if comp
-                .version
-                .as_deref()
-                .is_some_and(is_ambiguous_placeholder)
-            {
+            if comp.version.as_deref().is_some_and(is_placeholder) {
                 fields.push("version");
             }
             if comp
                 .supplier
                 .as_ref()
-                .is_some_and(|s| is_ambiguous_placeholder(&s.name))
+                .is_some_and(|s| is_placeholder(&s.name))
             {
                 fields.push("supplier");
             }
@@ -343,15 +307,11 @@ impl FsctEvidence {
                 .licenses
                 .all_licenses()
                 .iter()
-                .any(|l| is_ambiguous_placeholder(&l.expression))
+                .any(|l| is_placeholder(&l.expression))
             {
                 fields.push("license");
             }
-            if comp
-                .copyright
-                .as_deref()
-                .is_some_and(is_ambiguous_placeholder)
-            {
+            if comp.copyright.as_deref().is_some_and(is_placeholder) {
                 fields.push("copyright");
             }
             if !fields.is_empty() {
@@ -508,12 +468,13 @@ fn fsct_minimum_expected(
     let pkg_total = evidence.pkg_total;
 
     // §2.2.1.1 (Minimum) — Author Name: the entity that prompted the SBOM's
-    // creation. A tool-only creator list does not satisfy the element.
+    // creation. A tool-only creator list does not satisfy the element, and
+    // neither does an empty or placeholder name.
     let has_person_or_org = sbom
         .document
         .creators
         .iter()
-        .any(|c| c.creator_type != CreatorType::Tool);
+        .any(|c| c.creator_type != CreatorType::Tool && creator_identified(c));
     if !has_person_or_org {
         violations.push(Violation {
             severity: ViolationSeverity::Error,

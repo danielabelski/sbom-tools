@@ -57,9 +57,7 @@ fn parse_spec_version(v: &str) -> Option<(u64, u64, u64)> {
 /// is deliberately the complement of `known_value` (which treats the same
 /// sentinels as absent for the NTIA-style presence gates).
 fn is_unknown_marker(value: &str) -> bool {
-    value.eq_ignore_ascii_case("NOASSERTION")
-        || value.eq_ignore_ascii_case("NONE")
-        || value.eq_ignore_ascii_case("UNKNOWN")
+    is_declared_unknown(value)
 }
 
 /// Heuristic for the SBOM Tool Version element: whether a Tool creator's
@@ -121,11 +119,13 @@ impl ComplianceChecker {
         // SBOM data": the entity operating the generation tool, not the tool
         // itself, so a tool-only creator list fails. Deliberately stricter
         // than SBOM-NTIA-AUTHOR, which passes on any non-empty creator list.
+        // The author must also be identified: an empty or placeholder name
+        // (NOASSERTION, TBD) names no entity.
         let has_person_or_org = sbom
             .document
             .creators
             .iter()
-            .any(|c| c.creator_type != CreatorType::Tool);
+            .any(|c| c.creator_type != CreatorType::Tool && creator_identified(c));
         if !has_person_or_org {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
@@ -408,12 +408,10 @@ impl ComplianceChecker {
 
             // Component Version (Error). Explicit-unknown markers
             // (NOASSERTION/'unknown') satisfy the 2026 escape hatch and pass
-            // — the honesty requirement is the point of the Major Update —
-            // so only silent absence (no version string at all) fails.
-            let version_declared = comp
-                .version
-                .as_deref()
-                .is_some_and(|v| !v.trim().is_empty());
+            // — the honesty requirement is the point of the Major Update.
+            // Silent absence fails, and so do placeholders such as "TBD" or
+            // "N/A": they neither give a version nor state it is unknown.
+            let version_declared = value_state(comp.version.as_deref()) != ValueState::Missing;
             if !version_declared {
                 violations.push(Violation {
                     severity: ViolationSeverity::Error,

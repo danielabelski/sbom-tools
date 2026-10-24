@@ -741,6 +741,10 @@ pub struct Component {
 impl Component {
     /// Whether any producer attribution is present: a supplier, an author,
     /// or a manufacturer.
+    ///
+    /// This is a raw presence test: a `NOASSERTION` or placeholder name
+    /// counts. Compliance checks use the sentinel-aware `has_known_producer`
+    /// instead.
     #[must_use]
     pub const fn has_producer(&self) -> bool {
         self.supplier.is_some() || self.author.is_some() || self.manufacturer.is_some()

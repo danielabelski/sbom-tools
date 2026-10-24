@@ -134,22 +134,78 @@ pub(crate) fn truncate_list(items: &[String], max: usize) -> String {
     }
 }
 
-/// Return the trimmed value only when it carries real information.
-///
-/// SPDX and CycloneDX producers emit sentinel markers when a field is
-/// asserted-as-unknown rather than omitted (`NOASSERTION`, `NONE`,
-/// `UNKNOWN`); those and empty/whitespace-only strings count as absent so
-/// they cannot satisfy required-element gates.
-pub(crate) fn known_value(value: Option<&str>) -> Option<&str> {
-    let v = value?.trim();
-    if v.is_empty()
-        || v.eq_ignore_ascii_case("NOASSERTION")
+/// Placeholder values generators write instead of data (`TBD`, `N/A`, …).
+/// Unlike the explicit sentinels (see [`is_declared_unknown`]) they declare
+/// nothing, so they never satisfy an element in any standard. Curated
+/// conservatively so genuine values are never flagged; CISA FSCT §2.3.1
+/// calls these "ambiguous".
+const PLACEHOLDERS: &[&str] = &[
+    "tbd",
+    "to be determined",
+    "todo",
+    "n/a",
+    "n.a.",
+    "placeholder",
+    "unspecified",
+    "not specified",
+    "not available",
+    "unavailable",
+    "null",
+    "nil",
+    "undefined",
+    "xxx",
+    "-",
+    "--",
+    "?",
+];
+
+/// Whether `value` is a placeholder that declares nothing.
+pub(crate) fn is_placeholder(value: &str) -> bool {
+    let lower = value.trim().to_ascii_lowercase();
+    PLACEHOLDERS.contains(&lower.as_str())
+}
+
+/// Whether `value` is one of the explicit sentinels SPDX and CycloneDX
+/// producers write to assert that a value is unknown or absent
+/// (`NOASSERTION`, `NONE`, `UNKNOWN`).
+pub(crate) fn is_declared_unknown(value: &str) -> bool {
+    let v = value.trim();
+    v.eq_ignore_ascii_case("NOASSERTION")
         || v.eq_ignore_ascii_case("NONE")
         || v.eq_ignore_ascii_case("UNKNOWN")
-    {
-        return None;
+}
+
+/// What a field says about a required element.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ValueState {
+    /// A real value.
+    Known,
+    /// An explicit sentinel (`NOASSERTION`, `NONE`, `UNKNOWN`): the author
+    /// states the value is unknown. CISA 2026 and FSCT accept this where
+    /// their texts allow an explicit unknown; every other standard does not.
+    DeclaredUnknown,
+    /// Absent, empty, or a placeholder such as `TBD` or `N/A`. Never
+    /// satisfies an element.
+    Missing,
+}
+
+/// Classify a field value; see [`ValueState`].
+pub(crate) fn value_state(value: Option<&str>) -> ValueState {
+    match value.map(str::trim) {
+        None => ValueState::Missing,
+        Some(v) if v.is_empty() || is_placeholder(v) => ValueState::Missing,
+        Some(v) if is_declared_unknown(v) => ValueState::DeclaredUnknown,
+        Some(_) => ValueState::Known,
     }
-    Some(v)
+}
+
+/// Return the trimmed value only when it carries real information
+/// ([`ValueState::Known`]): not empty, not a sentinel such as `NOASSERTION`,
+/// and not a placeholder such as `TBD`. This is the presence test for every
+/// element that needs a real value.
+pub(crate) fn known_value(value: Option<&str>) -> Option<&str> {
+    let v = value?.trim();
+    (value_state(Some(v)) == ValueState::Known).then_some(v)
 }
 
 /// `known_value` convenience for `Option<String>` model fields.
@@ -169,6 +225,22 @@ pub(crate) fn has_known_producer(comp: &crate::model::Component) -> bool {
             .is_some_and(|o| known_value(Some(o.name.as_str())).is_some())
     };
     known_org(&comp.supplier) || known_org(&comp.manufacturer) || has_known_value(&comp.author)
+}
+
+/// Whether the component carries at least one real license expression,
+/// declared or concluded (sentinels and placeholders do not count).
+pub(crate) fn has_known_license(comp: &Component) -> bool {
+    comp.licenses
+        .all_licenses()
+        .iter()
+        .any(|l| known_value(Some(l.expression.as_str())).is_some())
+}
+
+/// Whether a creator identifies a real entity: a known name, or failing
+/// that a known email address.
+pub(crate) fn creator_identified(creator: &crate::model::Creator) -> bool {
+    known_value(Some(creator.name.as_str())).is_some()
+        || known_value(creator.email.as_deref()).is_some()
 }
 
 /// Simple email format validation (checks basic structure, not full RFC 5322)
@@ -201,4 +273,36 @@ pub(crate) fn is_valid_email_format(email: &str) -> bool {
     }
 
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn value_state_separates_known_declared_unknown_and_missing() {
+        for known in ["1.2.3", "Acme Corp", "0", "none-of-the-above"] {
+            assert_eq!(value_state(Some(known)), ValueState::Known, "{known:?}");
+        }
+        for declared in ["NOASSERTION", "noassertion", "NONE", "Unknown", " UNKNOWN "] {
+            assert_eq!(
+                value_state(Some(declared)),
+                ValueState::DeclaredUnknown,
+                "{declared:?}"
+            );
+        }
+        for missing in [
+            "", "   ", "TBD", "tbd", "N/A", "n.a.", "TODO", "-", "?", "null",
+        ] {
+            assert_eq!(
+                value_state(Some(missing)),
+                ValueState::Missing,
+                "{missing:?}"
+            );
+        }
+        assert_eq!(value_state(None), ValueState::Missing);
+        assert_eq!(known_value(Some(" 1.0 ")), Some("1.0"));
+        assert_eq!(known_value(Some("N/A")), None);
+        assert_eq!(known_value(Some("NOASSERTION")), None);
+    }
 }
