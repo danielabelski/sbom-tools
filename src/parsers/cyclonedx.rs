@@ -1231,12 +1231,12 @@ impl CycloneDxParser {
 
     /// Convert a `CycloneDX` service (SaaSBOM, 1.4+) to a normalized
     /// Component. The normalized model has no first-class service kind, so
-    /// services map to `ComponentType::Other("service")`, with provider →
+    /// services map to `ComponentType::Service`, with provider →
     /// supplier and endpoints preserved as external references.
     fn convert_service(&self, svc: &CdxService) -> Component {
         let format_id = svc.bom_ref.clone().unwrap_or_else(|| svc.name.clone());
         let mut comp = Component::new(svc.name.clone(), format_id);
-        comp.component_type = ComponentType::Other("service".to_string());
+        comp.component_type = ComponentType::Service;
 
         if let Some(version) = &svc.version {
             comp = comp.with_version(version.clone());
@@ -5285,7 +5285,7 @@ mod tests {
         );
         assert_eq!(sbom.component_count(), 3, "app + 2 services");
         let svc = component(&sbom, "api-gateway");
-        assert!(matches!(&svc.component_type, ComponentType::Other(t) if t == "service"));
+        assert_eq!(svc.component_type, ComponentType::Service);
         assert_eq!(
             svc.supplier.as_ref().map(|s| s.name.as_str()),
             Some("Acme SaaS")

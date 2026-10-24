@@ -414,11 +414,15 @@ impl FsctEvidence {
             touched.insert(&edge.from);
             touched.insert(&edge.to);
         }
+        // Relationships are a package-graph element: files, crypto assets
+        // and services need not appear in the dependency graph.
         let orphans: Vec<String> = sbom
             .components
             .iter()
-            .filter(|(id, _)| {
-                !touched.contains(id) && sbom.primary_component_id.as_ref() != Some(id)
+            .filter(|(id, c)| {
+                c.component_type.is_package_scoped()
+                    && !touched.contains(id)
+                    && sbom.primary_component_id.as_ref() != Some(id)
             })
             .map(|(_, c)| c.name.clone())
             .collect();
@@ -1029,7 +1033,7 @@ fn fsct_recommended_practice(
                 "[CISA FSCT 3e §2.2.2.6] {}/{} component(s) appear in no dependency \
                  relationship (orphans in the inventory): {}",
                 evidence.orphans.len(),
-                evidence.total,
+                evidence.pkg_total,
                 truncate_list(&evidence.orphans, 5)
             ),
             element: None,
@@ -1040,7 +1044,7 @@ fn fsct_recommended_practice(
             component_id: None,
             counts: Some(ViolationCounts {
                 affected: evidence.orphans.len(),
-                total: evidence.total,
+                total: evidence.pkg_total,
             }),
             standard_refs: Vec::new(),
         });

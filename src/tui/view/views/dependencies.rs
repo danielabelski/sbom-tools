@@ -603,6 +603,7 @@ fn component_type_badge(ct: &crate::model::ComponentType) -> (&'static str, Colo
         ComponentType::Platform => ("PLAT", scheme.secondary),
         ComponentType::DeviceDriver => ("DRV", scheme.text_muted),
         ComponentType::Cryptographic => ("CRYPT", scheme.accent),
+        ComponentType::Service => ("SVC", scheme.secondary),
         ComponentType::Other(_) => ("OTHER", scheme.text_muted),
     }
 }

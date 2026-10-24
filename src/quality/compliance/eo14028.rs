@@ -153,10 +153,12 @@ impl ComplianceChecker {
         // Sec 4(e) — Component identification with unique identifiers
         // (PURL/CPE/SWHID/SWID via `has_cra_identifier`, so SWHID-only SPDX
         // components are not flagged)
-        let total = sbom.components.len();
-        let without_id = sbom
-            .components
-            .values()
+        // Package elements (identifier, version, hash, supplier) apply to
+        // package-scoped components only; names apply to every component.
+        let packages: Vec<_> = package_components(sbom).collect();
+        let total = packages.len();
+        let without_id = packages
+            .iter()
             .filter(|c| !c.identifiers.has_cra_identifier())
             .count();
         if without_id > 0 {
@@ -179,6 +181,8 @@ impl ComplianceChecker {
         }
 
         // Sec 4(e) — NTIA baseline: component names
+        // All components: every component needs a name, package or not.
+        let all_components = sbom.components.len();
         let without_name = sbom
             .components
             .values()
@@ -188,21 +192,24 @@ impl ComplianceChecker {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::ComponentIdentification,
-                message: format!("{without_name}/{total} components missing a component name"),
+                message: format!(
+                    "{without_name}/{all_components} components missing a component name"
+                ),
                 element: None,
                 requirement: "EO 14028 Sec 4(e): Component name (NTIA baseline)".to_string(),
                 rule_id: "SBOM-EO14028-NAME",
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_name,
-                    total,
+                    total: all_components,
                 }),
                 standard_refs: Vec::new(),
             });
         }
 
-        // Sec 4(e) — Dependency relationships
-        if sbom.components.len() > 1 && sbom.edges.is_empty() {
+        // Sec 4(e) — Dependency relationships (between packages: crypto
+        // assets and files need not join the dependency graph)
+        if total > 1 && sbom.edges.is_empty() {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::DependencyInfo,
@@ -219,9 +226,8 @@ impl ComplianceChecker {
 
         // Sec 4(e) — Version information (placeholder values such as
         // NOASSERTION do not satisfy the element)
-        let without_version = sbom
-            .components
-            .values()
+        let without_version = packages
+            .iter()
             .filter(|c| !has_known_value(&c.version))
             .count();
         if without_version > 0 {
@@ -244,11 +250,7 @@ impl ComplianceChecker {
         }
 
         // Sec 4(e) — Cryptographic hashes for integrity
-        let without_hash = sbom
-            .components
-            .values()
-            .filter(|c| c.hashes.is_empty())
-            .count();
+        let without_hash = packages.iter().filter(|c| c.hashes.is_empty()).count();
         if without_hash > 0 {
             violations.push(Violation {
                 severity: ViolationSeverity::Warning,
@@ -296,11 +298,7 @@ impl ComplianceChecker {
 
         // Sec 4(e) — Supplier identification (placeholder values such as
         // NOASSERTION do not satisfy the element)
-        let without_supplier = sbom
-            .components
-            .values()
-            .filter(|c| !has_known_producer(c))
-            .count();
+        let without_supplier = packages.iter().filter(|c| !has_known_producer(c)).count();
         if without_supplier > 0 {
             // Supplier Name is a REQUIRED NTIA minimum element, and EO 14028
             // §4(e) mandates the NTIA minimum elements — so a missing supplier

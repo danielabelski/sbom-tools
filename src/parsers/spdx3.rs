@@ -632,7 +632,9 @@ impl Spdx3Parser {
                 "operatingsystem" | "operating-system" => ComponentType::OperatingSystem,
                 "device" => ComponentType::Device,
                 "firmware" => ComponentType::Firmware,
-                "file" | "source" | "archive" => ComponentType::File,
+                // A package whose purpose is file, source or archive is
+                // still a package; software_File elements become `File`.
+                "file" | "source" | "archive" => ComponentType::Other(purpose.to_lowercase()),
                 "data" | "documentation" => ComponentType::Data,
                 "model" => ComponentType::MachineLearningModel,
                 "platform" => ComponentType::Platform,

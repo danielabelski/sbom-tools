@@ -1086,6 +1086,7 @@ fn declared_type_bucket(comp: &Component) -> &'static str {
         ComponentType::Data => "Data",
         ComponentType::MachineLearningModel => "ML Models",
         ComponentType::Cryptographic => "Crypto Assets",
+        ComponentType::Service => "Services",
         ComponentType::File | ComponentType::Other(_) => {
             match crate::tui::widgets::detect_component_type(&comp.name) {
                 "lib" => "Libraries",

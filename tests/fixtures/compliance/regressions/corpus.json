@@ -252,7 +252,6 @@
       "checks": [
         {
           "standard": "ntia",
-          "xfail": "0.4",
           "expect": {
             "compliant": false,
             "errors": 3,
@@ -281,7 +280,6 @@
       "checks": [
         {
           "standard": "ntia",
-          "xfail": "0.4",
           "expect": {
             "compliant": false,
             "errors": 3
@@ -297,7 +295,6 @@
       "checks": [
         {
           "standard": "ntia",
-          "xfail": "0.4",
           "expect": {
             "compliant": false,
             "errors": 3
@@ -313,7 +310,6 @@
       "checks": [
         {
           "standard": "eo14028",
-          "xfail": "0.4",
           "expect": {
             "rule_counts": [
               {
@@ -325,7 +321,6 @@
         },
         {
           "standard": "ssdf",
-          "xfail": "0.4",
           "expect": {
             "rule_counts": [
               {
@@ -337,19 +332,20 @@
         },
         {
           "standard": "bsi",
-          "xfail": "0.4",
           "expect": {
             "rule_counts": [
               {
-                "rule": "SBOM-BSI-TR-03183-2-VERSION",
+                "rule": "SBOM-BSI-TR-03183-2-CREATOR",
                 "total": 2
               }
+            ],
+            "rules_absent": [
+              "SBOM-BSI-TR-03183-2-VERSION"
             ]
           }
         },
         {
           "standard": "cra",
-          "xfail": "0.4",
           "expect": {
             "message_excludes": [
               {

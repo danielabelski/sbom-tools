@@ -3,6 +3,16 @@
 use super::{Violation, ViolationCategory, ViolationSeverity};
 use crate::model::{Component, ComponentType, NormalizedSbom};
 
+/// The components package rules apply to: everything except files,
+/// snippets, cryptographic assets and services (see
+/// [`ComponentType::is_package_scoped`]). Every per-component package check
+/// iterates through this, so no standard can forget the carve-out.
+pub(crate) fn package_components(sbom: &NormalizedSbom) -> impl Iterator<Item = &Component> {
+    sbom.components
+        .values()
+        .filter(|c| c.component_type.is_package_scoped())
+}
+
 /// The inventory-absent finding for `rule_id`, or `None` when the SBOM lists
 /// at least one package-scoped component.
 ///
@@ -18,11 +28,7 @@ pub(crate) fn inventory_absent_violation(
     rule_id: &'static str,
     requirement: &str,
 ) -> Option<Violation> {
-    if sbom
-        .components
-        .values()
-        .any(|c| c.component_type.is_package_scoped())
-    {
+    if package_components(sbom).next().is_some() {
         return None;
     }
     let total = sbom.components.len();
@@ -36,7 +42,7 @@ pub(crate) fn inventory_absent_violation(
         let what = if all_crypto {
             "cryptographic assets"
         } else {
-            "files, snippets or cryptographic assets"
+            "files, snippets, services or cryptographic assets"
         };
         let mut message = format!(
             "SBOM lists no software components, only {total} {what}; it is not a software inventory"

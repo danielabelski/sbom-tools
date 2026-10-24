@@ -180,7 +180,12 @@ impl ComplianceChecker {
         //   - Executable / archive / structured properties (CycloneDX
         //     `bsi:component:executable|archive|structured` taxonomy): not
         //     modeled.
+        // Names (§5.2.2) and the §3.1 vulnerability prohibition apply to
+        // every component; the package fields (version, licence, creator,
+        // hash, identifier) only to package-scoped components — files,
+        // crypto assets and services carry none of them.
         let total = sbom.components.len();
+        let package_total = package_components(sbom).count();
         let mut nameless = 0usize;
         let mut without_version: Vec<String> = Vec::new();
         let mut without_license: Vec<String> = Vec::new();
@@ -194,6 +199,13 @@ impl ComplianceChecker {
         for comp in sbom.components.values() {
             if !known_component_name(comp) {
                 nameless += 1;
+            }
+            // §3.1 vulnerability-information prohibition.
+            if !comp.vulnerabilities.is_empty() {
+                with_vulnerabilities += 1;
+            }
+            if !comp.component_type.is_package_scoped() {
+                continue;
             }
             if !has_known_value(&comp.version) {
                 without_version.push(comp.name.clone());
@@ -248,11 +260,6 @@ impl ComplianceChecker {
             if !comp.identifiers.has_cra_identifier() {
                 without_identifier.push(comp.name.clone());
             }
-
-            // §3.1 vulnerability-information prohibition.
-            if !comp.vulnerabilities.is_empty() {
-                with_vulnerabilities += 1;
-            }
         }
 
         // §5.2.2 — Component name (required; fallback: the actual filename).
@@ -286,7 +293,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::ComponentIdentification,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.2] {}/{total} component(s) missing a version (if no \
+                    "[BSI TR-03183-2 §5.2.2] {}/{package_total} component(s) missing a version (if no \
                      version is assigned this MUST be the RFC 3339 modification date of the \
                      file): {}",
                     without_version.len(),
@@ -298,7 +305,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_version.len(),
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -310,7 +317,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::LicenseInfo,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.2] {}/{total} component(s) missing distribution \
+                    "[BSI TR-03183-2 §5.2.2] {}/{package_total} component(s) missing distribution \
                      licence(s): {}",
                     without_license.len(),
                     truncate_list(&without_license, 5)
@@ -321,7 +328,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_license.len(),
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -334,7 +341,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::LicenseInfo,
                 message: format!(
-                    "[BSI TR-03183-2 §6.1] {}/{total} component(s) name licences that are not \
+                    "[BSI TR-03183-2 §6.1] {}/{package_total} component(s) name licences that are not \
                      valid SPDX identifiers/expressions (licence text is not a substitute): {}",
                     non_spdx_license.len(),
                     truncate_list(&non_spdx_license, 5)
@@ -345,7 +352,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: non_spdx_license.len(),
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -358,7 +365,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::SupplierInfo,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.2] {without_creator}/{total} component(s) missing a \
+                    "[BSI TR-03183-2 §5.2.2] {without_creator}/{package_total} component(s) missing a \
                      component creator (supplier/author with email, or URL if no email)"
                 ),
                 element: None,
@@ -367,7 +374,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_creator,
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -379,7 +386,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::IntegrityInfo,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.2] {}/{total} component(s) carry hashes but none is \
+                    "[BSI TR-03183-2 §5.2.2] {}/{package_total} component(s) carry hashes but none is \
                      SHA-512 (the TR names the algorithm; SHA-256 or others alone do not \
                      satisfy the required field): {}",
                     sha512_missing.len(),
@@ -392,7 +399,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: sha512_missing.len(),
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -407,7 +414,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::IntegrityInfo,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.2] {without_hash}/{total} component(s) have no hash of \
+                    "[BSI TR-03183-2 §5.2.2] {without_hash}/{package_total} component(s) have no hash of \
                      the deployable form; required as SHA-512 unless the information is \
                      unavailable due to the way the component is assembled (§3.2.1)"
                 ),
@@ -417,7 +424,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_hash,
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
@@ -425,7 +432,7 @@ impl ComplianceChecker {
 
         // §5.2.2 — Dependencies on other components (required): explicit
         // relationship graph.
-        if sbom.edges.is_empty() && sbom.components.len() > 1 {
+        if sbom.edges.is_empty() && package_total > 1 {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::DependencyInfo,
@@ -477,7 +484,7 @@ impl ComplianceChecker {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::ComponentIdentification,
                 message: format!(
-                    "[BSI TR-03183-2 §5.2.4] {}/{total} component(s) missing a unique identifier \
+                    "[BSI TR-03183-2 §5.2.4] {}/{package_total} component(s) missing a unique identifier \
                      (purl/CPE/SWHID/SWID) — an additional-tier field that MUST be provided when \
                      one exists: {}",
                     without_identifier.len(),
@@ -489,7 +496,7 @@ impl ComplianceChecker {
                 component_id: None,
                 counts: Some(ViolationCounts {
                     affected: without_identifier.len(),
-                    total,
+                    total: package_total,
                 }),
                 standard_refs: Vec::new(),
             });
