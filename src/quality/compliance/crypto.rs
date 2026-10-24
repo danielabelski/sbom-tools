@@ -320,8 +320,9 @@ impl ComplianceChecker {
 
         let index = sbom.build_index();
 
-        // Count only assets that actually receive CNSA 2.0 evaluation, so an
-        // inventory of unevaluable assets cannot satisfy the CNSA2-000 gate.
+        // Count only assets the classifier could actually judge against the
+        // CNSA 2.0 allowlist, so an inventory of unidentifiable assets
+        // cannot satisfy the CNSA2-000 gate.
         let mut crypto_assets_evaluated = 0usize;
 
         // All components: the loop selects cryptographic assets by type.
@@ -335,8 +336,9 @@ impl ComplianceChecker {
 
             match cp.asset_type {
                 CryptoAssetType::Algorithm => {
-                    crypto_assets_evaluated += 1;
-                    Self::check_cnsa2_algorithm(comp, cp, violations);
+                    if Self::check_cnsa2_algorithm(comp, cp, violations) {
+                        crypto_assets_evaluated += 1;
+                    }
                 }
                 CryptoAssetType::Certificate => {
                     // CNSA2-CERT-001: cert must use a CNSA 2.0 signature
@@ -349,12 +351,14 @@ impl ComplianceChecker {
                         .as_ref()
                         .map(CertificateProperties::signature_algorithm_refs)
                         .unwrap_or_default();
-                    if !sig_refs.is_empty() {
-                        crypto_assets_evaluated += 1;
-                    }
+                    // Counted only when at least one signing candidate
+                    // could be classified.
+                    let mut judged = false;
                     for sig_ref in sig_refs {
                         let (cls, bits) = classify_bom_ref(sig_ref, sbom, &index);
-                        match cnsa2_verdict(&cls, bits) {
+                        let verdict = cnsa2_verdict(&cls, bits);
+                        judged |= !matches!(verdict, CnsaVerdict::Unknown);
+                        match verdict {
                             CnsaVerdict::Approved => {}
                             CnsaVerdict::NotApproved { detail, .. } => {
                                 violations.push(Violation {
@@ -373,18 +377,17 @@ impl ComplianceChecker {
                                     standard_refs: Vec::new(),
                                 });
                             }
-                            // An unclassifiable signature ref must warn, never
-                            // silently pass — mirrors SBOM-CNSA2-ALG-UNKNOWN
-                            // (previously a certificate-only CBOM whose sig
-                            // ref was opaque reported 100% compliant).
+                            // An unclassifiable signature ref fails closed —
+                            // CNSA 2.0 is an allowlist, so a signature that
+                            // cannot be identified cannot be shown to comply.
                             CnsaVerdict::Unknown => {
                                 violations.push(Violation {
-                                    severity: ViolationSeverity::Warning,
+                                    severity: ViolationSeverity::Error,
                                     category: ViolationCategory::CryptographyInfo,
                                     message: format!(
                                         "Certificate '{}' signature algorithm ref '{sig_ref}' \
-                                         cannot be resolved or classified; unable to verify \
-                                         against the CNSA 2.0 allowlist",
+                                         cannot be resolved or classified, so it cannot be \
+                                         shown to be on the CNSA 2.0 allowlist",
                                         comp.name
                                     ),
                                     element: Some(comp.name.clone()),
@@ -398,11 +401,15 @@ impl ComplianceChecker {
                             }
                         }
                     }
+                    if judged {
+                        crypto_assets_evaluated += 1;
+                    }
                 }
                 CryptoAssetType::Protocol => {
-                    if let Some(proto) = &cp.protocol_properties {
+                    if let Some(proto) = &cp.protocol_properties
+                        && Self::check_cnsa2_protocol(comp, proto, sbom, &index, violations)
+                    {
                         crypto_assets_evaluated += 1;
-                        Self::check_cnsa2_protocol(comp, proto, sbom, &index, violations);
                     }
                 }
                 // Key material and unrecognized asset kinds get no CNSA 2.0
@@ -419,9 +426,9 @@ impl ComplianceChecker {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::CryptographyInfo,
-                message: "No cryptographic inventory (CBOM) with evaluable assets found; \
-                          CNSA 2.0 compliance cannot be asserted. Provide algorithm, \
-                          certificate, or protocol cryptographic asset components."
+                message: "No cryptographic asset the CNSA 2.0 check could identify; \
+                          compliance cannot be asserted. Provide algorithm, certificate, or \
+                          protocol assets with a recognizable algorithm family, OID, or name."
                     .to_string(),
                 element: None,
                 requirement: "CNSA 2.0: cryptographic inventory required".to_string(),
@@ -434,12 +441,14 @@ impl ComplianceChecker {
     }
 
     /// Evaluate a single algorithm asset against the CNSA 2.0 allowlist plus
-    /// the declared-quantum-level rules (ALG-006/ALG-007).
+    /// the declared-quantum-level rules (ALG-006/ALG-007). Returns whether
+    /// the asset was judged — classified, or declared quantum-vulnerable —
+    /// which is what the CNSA2-000 inventory gate counts.
     fn check_cnsa2_algorithm(
         comp: &Component,
         cp: &crate::model::CryptoProperties,
         violations: &mut Vec<Violation>,
-    ) {
+    ) -> bool {
         let cls = classify_crypto_component(comp);
 
         // Declared-quantum-level rules. Symmetric/hash primitives are allowed
@@ -499,8 +508,13 @@ impl ComplianceChecker {
             .algorithm_properties
             .as_ref()
             .and_then(|a| a.classical_security_level);
+        let declared_vulnerable = cp
+            .algorithm_properties
+            .as_ref()
+            .and_then(|a| a.nist_quantum_security_level)
+            == Some(0);
         match cnsa2_verdict(&cls, classical_bits) {
-            CnsaVerdict::Approved => {}
+            CnsaVerdict::Approved => true,
             CnsaVerdict::NotApproved { rule_id, detail } => {
                 violations.push(Violation {
                     severity: ViolationSeverity::Error,
@@ -513,22 +527,29 @@ impl ComplianceChecker {
                     counts: None,
                     standard_refs: Vec::new(),
                 });
+                true
             }
             CnsaVerdict::Unknown => {
                 // A declared level-0 asset already produced the ALG-006 Error
-                // above; the extra "cannot classify" Warning is then noise.
-                let declared_vulnerable = cp
-                    .algorithm_properties
-                    .as_ref()
-                    .and_then(|a| a.nist_quantum_security_level)
-                    == Some(0);
+                // above, which judges it; a second finding would be noise.
+                // Otherwise fail closed: CNSA 2.0 is an allowlist, so an
+                // algorithm that cannot be identified cannot be shown to
+                // comply.
                 if !declared_vulnerable {
+                    let hybrid = cp
+                        .algorithm_properties
+                        .as_ref()
+                        .is_some_and(crate::model::AlgorithmProperties::is_hybrid_pqc);
+                    let what = if hybrid {
+                        "is a hybrid combiner whose component algorithms cannot be identified"
+                    } else {
+                        "cannot be classified (no recognizable algorithm family, OID, or name)"
+                    };
                     violations.push(Violation {
-                        severity: ViolationSeverity::Warning,
+                        severity: ViolationSeverity::Error,
                         category: ViolationCategory::CryptographyInfo,
                         message: format!(
-                            "'{}' cannot be classified (no recognizable algorithm family, \
-                             OID, or name); unable to verify against the CNSA 2.0 allowlist",
+                            "'{}' {what}, so it cannot be shown to be on the CNSA 2.0 allowlist",
                             comp.name
                         ),
                         element: Some(comp.name.clone()),
@@ -539,21 +560,25 @@ impl ComplianceChecker {
                         standard_refs: Vec::new(),
                     });
                 }
+                declared_vulnerable
             }
         }
     }
 
     /// Evaluate a protocol asset under CNSA 2.0: TLS 1.3 required, and every
     /// resolvable cipher-suite algorithm / IKEv2 transform / crypto reference
-    /// must be on the allowlist.
+    /// must be on the allowlist. Returns whether the protocol was judged —
+    /// failed on its version, or had at least one algorithm classified —
+    /// which is what the CNSA2-000 inventory gate counts.
     fn check_cnsa2_protocol(
         comp: &Component,
         proto: &ProtocolProperties,
         sbom: &NormalizedSbom,
         index: &NormalizedSbomIndex,
         violations: &mut Vec<Violation>,
-    ) {
+    ) -> bool {
         // PROTO-001: version gate — CNSA 2.0 network guidance requires TLS 1.3.
+        let violations_before = violations.len();
         if is_ssl_protocol(proto) {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
@@ -597,6 +622,7 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         }
+        let version_rejected = violations.len() > violations_before;
 
         // Collect non-allowlisted algorithms per source, deduplicated by label.
         let mut push_proto_violation = |context: String, offenders: Vec<String>| {
@@ -623,8 +649,13 @@ impl ComplianceChecker {
         // receive no effective check — collect them so the protocol warns
         // instead of silently satisfying the CNSA2-000 inventory gate.
         let mut unverifiable: Vec<String> = Vec::new();
+        // How many algorithms the classifier could identify, approved or not.
+        let judged = std::cell::Cell::new(0usize);
         let record =
             |cls: &AlgorithmClassification, bits: Option<u32>, offenders: &mut Vec<String>| {
+                if cls.class != AlgorithmClass::Unknown {
+                    judged.set(judged.get() + 1);
+                }
                 if let CnsaVerdict::NotApproved { .. } = cnsa2_verdict(cls, bits) {
                     let label = cls.label();
                     if !offenders.contains(&label) {
@@ -703,11 +734,11 @@ impl ComplianceChecker {
         }
         push_proto_violation("references".to_string(), offenders);
 
-        // A protocol whose references are all opaque, or that documents
-        // nothing evaluable at all (no SSL/TLS/DTLS version gate, no cipher
-        // suites, no transforms, no references), must warn rather than
-        // silently satisfying the CNSA2-000 inventory gate — mirrors
-        // SBOM-CNSA2-ALG-UNKNOWN.
+        // Fail closed when the protocol's algorithms cannot be verified:
+        // opaque references, or nothing the classifier can name at all (a
+        // TLS 1.3 asset whose suites carry no recognizable algorithm passed
+        // silently). A protocol already rejected on its version is judged.
+        let judged = judged.get();
         let substantive = is_ssl_protocol(proto)
             || matches!(proto.protocol_type, ProtocolType::Tls | ProtocolType::Dtls)
             || !proto.cipher_suites.is_empty()
@@ -715,11 +746,11 @@ impl ComplianceChecker {
             || !proto.crypto_ref_array.is_empty();
         if !unverifiable.is_empty() {
             violations.push(Violation {
-                severity: ViolationSeverity::Warning,
+                severity: ViolationSeverity::Error,
                 category: ViolationCategory::CryptographyInfo,
                 message: format!(
                     "Protocol '{}' has crypto references that cannot be resolved or \
-                     classified: {}; unable to verify against the CNSA 2.0 allowlist",
+                     classified: {}; they cannot be shown to be on the CNSA 2.0 allowlist",
                     comp.name,
                     unverifiable.join(", ")
                 ),
@@ -730,13 +761,21 @@ impl ComplianceChecker {
                 counts: None,
                 standard_refs: Vec::new(),
             });
-        } else if !substantive {
+        } else if judged == 0 && !version_rejected {
+            let detail = if substantive {
+                format!(
+                    "Protocol '{}' declares no cipher suite, transform or algorithm the \
+                     classifier can name",
+                    comp.name
+                )
+            } else {
+                unevaluable_protocol_detail(&comp.name, proto)
+            };
             violations.push(Violation {
-                severity: ViolationSeverity::Warning,
+                severity: ViolationSeverity::Error,
                 category: ViolationCategory::CryptographyInfo,
                 message: format!(
-                    "{}; its algorithms cannot be verified against the CNSA 2.0 allowlist",
-                    unevaluable_protocol_detail(&comp.name, proto)
+                    "{detail}; its algorithms cannot be shown to be on the CNSA 2.0 allowlist"
                 ),
                 element: Some(comp.name.clone()),
                 requirement: "CNSA 2.0: protocol algorithm identification".to_string(),
@@ -746,6 +785,7 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         }
+        version_rejected || judged > 0
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -774,8 +814,9 @@ impl ComplianceChecker {
 
             match cp.asset_type {
                 CryptoAssetType::Algorithm => {
-                    crypto_assets_evaluated += 1;
-                    Self::check_pqc_algorithm(comp, cp, violations);
+                    if Self::check_pqc_algorithm(comp, cp, violations) {
+                        crypto_assets_evaluated += 1;
+                    }
                 }
                 CryptoAssetType::Certificate => {
                     // PQC-CERT-001: certificate signature algorithm must not be
@@ -788,11 +829,12 @@ impl ComplianceChecker {
                         .as_ref()
                         .map(CertificateProperties::signature_algorithm_refs)
                         .unwrap_or_default();
-                    if !sig_refs.is_empty() {
-                        crypto_assets_evaluated += 1;
-                    }
+                    // Counted only when at least one signing candidate
+                    // could be classified.
+                    let mut judged = false;
                     for sig_ref in sig_refs {
                         let (cls, _) = classify_bom_ref(sig_ref, sbom, &index);
+                        judged |= cls.class != AlgorithmClass::Unknown;
                         let problem = match cls.class {
                             AlgorithmClass::Broken => Some("broken algorithm (SP 800-131A)"),
                             AlgorithmClass::ClassicalQuantumVulnerable => {
@@ -840,11 +882,15 @@ impl ComplianceChecker {
                             });
                         }
                     }
+                    if judged {
+                        crypto_assets_evaluated += 1;
+                    }
                 }
                 CryptoAssetType::Protocol => {
-                    if let Some(proto) = &cp.protocol_properties {
+                    if let Some(proto) = &cp.protocol_properties
+                        && Self::check_pqc_protocol(comp, proto, sbom, &index, violations)
+                    {
                         crypto_assets_evaluated += 1;
-                        Self::check_pqc_protocol(comp, proto, sbom, &index, violations);
                     }
                 }
                 CryptoAssetType::RelatedCryptoMaterial => {
@@ -892,9 +938,9 @@ impl ComplianceChecker {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::CryptographyInfo,
-                message: "No cryptographic inventory (CBOM) with evaluable assets found; \
-                          NIST PQC readiness cannot be asserted. Provide algorithm, \
-                          certificate, or protocol cryptographic asset components."
+                message: "No cryptographic asset the PQC check could identify; NIST PQC \
+                          readiness cannot be asserted. Provide algorithm, certificate, or \
+                          protocol assets with a recognizable algorithm family, OID, or name."
                     .to_string(),
                 element: None,
                 requirement: "IR 8547: cryptographic inventory required".to_string(),
@@ -906,15 +952,41 @@ impl ComplianceChecker {
         }
     }
 
-    /// Evaluate a single algorithm asset for NIST PQC readiness.
+    /// Evaluate a single algorithm asset for NIST PQC readiness. Returns
+    /// whether the asset was judged — classified, or declared
+    /// quantum-vulnerable — which is what the PQC-000 inventory gate counts.
     fn check_pqc_algorithm(
         comp: &Component,
         cp: &crate::model::CryptoProperties,
         violations: &mut Vec<Violation>,
-    ) {
+    ) -> bool {
         let algo = cp.algorithm_properties.as_ref();
         let cls = classify_crypto_component(comp);
         let ql = algo.and_then(|a| a.nist_quantum_security_level);
+
+        // PQC-ALG-UNKNOWN: an algorithm the classifier cannot name used to
+        // pass silently whenever it declared a quantum level. It cannot be
+        // verified, so it warns and does not count as inventory. A declared
+        // level 0 is judged by PQC-001 below instead, and a declared hybrid
+        // combiner by PQC-010.
+        let hybrid = algo.is_some_and(crate::model::AlgorithmProperties::is_hybrid_pqc);
+        if cls.class == AlgorithmClass::Unknown && ql != Some(0) && !hybrid {
+            violations.push(Violation {
+                severity: ViolationSeverity::Warning,
+                category: ViolationCategory::CryptographyInfo,
+                message: format!(
+                    "'{}' cannot be classified (no recognizable algorithm family, OID, or \
+                     name); unable to verify PQC readiness",
+                    comp.name
+                ),
+                element: Some(comp.name.clone()),
+                requirement: "IR 8547: algorithm identification".to_string(),
+                rule_id: "SBOM-PQC-ALG-UNKNOWN",
+                component_id: Some(comp.canonical_id.value().to_string()),
+                counts: None,
+                standard_refs: Vec::new(),
+            });
+        }
 
         // PQC-001: quantum-vulnerable algorithm. A classical public-key
         // algorithm (RSA/ECDSA/ECDH/DH/DSA/EdDSA/…) is broken by Shor's
@@ -1046,19 +1118,25 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         }
+        cls.class != AlgorithmClass::Unknown || ql == Some(0) || hybrid
     }
 
     /// Evaluate a protocol asset for PQC readiness: no SSL / TLS below 1.2,
     /// and no broken or quantum-vulnerable algorithms in cipher suites,
     /// IKEv2 transforms, or crypto references.
+    ///
+    /// Returns whether the protocol was judged — failed on its version, or
+    /// had at least one algorithm classified — which is what the PQC-000
+    /// inventory gate counts.
     fn check_pqc_protocol(
         comp: &Component,
         proto: &ProtocolProperties,
         sbom: &NormalizedSbom,
         index: &NormalizedSbomIndex,
         violations: &mut Vec<Violation>,
-    ) {
+    ) -> bool {
         // PQC-PROTO-001: SSL anything, or TLS/DTLS below 1.2.
+        let violations_before = violations.len();
         if is_ssl_protocol(proto) {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
@@ -1096,6 +1174,7 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         }
+        let version_rejected = violations.len() > violations_before;
 
         // Unverifiable evidence: opaque references and unparseable TLS
         // versions receive no effective check, so they are collected for a
@@ -1128,7 +1207,12 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         };
+        // How many algorithms the classifier could identify, ready or not.
+        let judged = std::cell::Cell::new(0usize);
         let record = |cls: &AlgorithmClassification, offenders: &mut Vec<String>| {
+            if cls.class != AlgorithmClass::Unknown {
+                judged.set(judged.get() + 1);
+            }
             let tag = match cls.class {
                 AlgorithmClass::Broken => Some("broken"),
                 AlgorithmClass::ClassicalQuantumVulnerable => Some("quantum-vulnerable"),
@@ -1232,14 +1316,22 @@ impl ComplianceChecker {
                 counts: None,
                 standard_refs: Vec::new(),
             });
-        } else if !substantive {
+        } else if judged.get() == 0 && !version_rejected {
+            // Nothing the classifier can name: a TLS 1.3 asset whose suites
+            // carry no recognizable algorithm used to pass silently.
+            let detail = if substantive {
+                format!(
+                    "Protocol '{}' declares no cipher suite, transform or algorithm the \
+                     classifier can name",
+                    comp.name
+                )
+            } else {
+                unevaluable_protocol_detail(&comp.name, proto)
+            };
             violations.push(Violation {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::CryptographyInfo,
-                message: format!(
-                    "{}; its algorithms cannot be verified for PQC readiness",
-                    unevaluable_protocol_detail(&comp.name, proto)
-                ),
+                message: format!("{detail}; its algorithms cannot be verified for PQC readiness"),
                 element: Some(comp.name.clone()),
                 requirement: "IR 8547: protocol algorithm identification".to_string(),
                 rule_id: "SBOM-PQC-PROTO-UNKNOWN",
@@ -1248,5 +1340,6 @@ impl ComplianceChecker {
                 standard_refs: Vec::new(),
             });
         }
+        version_rejected || judged.get() > 0
     }
 }

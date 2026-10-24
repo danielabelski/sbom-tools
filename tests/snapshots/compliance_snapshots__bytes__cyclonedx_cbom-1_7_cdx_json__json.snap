@@ -126,9 +126,9 @@ source: tests/compliance_snapshots.rs
         ]
       },
       {
-        "severity": "Warning",
+        "severity": "Error",
         "category": "CryptographyInfo",
-        "message": "'X25519-ML-KEM-768' cannot be classified (no recognizable algorithm family, OID, or name); unable to verify against the CNSA 2.0 allowlist",
+        "message": "'X25519-ML-KEM-768' is a hybrid combiner whose component algorithms cannot be identified, so it cannot be shown to be on the CNSA 2.0 allowlist",
         "element": "X25519-ML-KEM-768",
         "component_id": "crypto/algorithm/hybrid-kem",
         "requirement": "CNSA 2.0: algorithm identification",
@@ -194,9 +194,9 @@ source: tests/compliance_snapshots.rs
         ]
       },
       {
-        "severity": "Warning",
+        "severity": "Error",
         "category": "CryptographyInfo",
-        "message": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; unable to verify against the CNSA 2.0 allowlist",
+        "message": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; they cannot be shown to be on the CNSA 2.0 allowlist",
         "element": "TLS 1.3 (PQC Hybrid)",
         "component_id": "crypto/protocol/tls13-pqc",
         "requirement": "CNSA 2.0: protocol algorithm identification",
@@ -211,8 +211,8 @@ source: tests/compliance_snapshots.rs
         ]
       }
     ],
-    "error_count": 10,
-    "warning_count": 2,
+    "error_count": 12,
+    "warning_count": 0,
     "info_count": 0,
     "applicability": {
       "status": "applicable"

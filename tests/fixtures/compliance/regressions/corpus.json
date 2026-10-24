@@ -486,19 +486,32 @@
       "checks": [
         {
           "standard": "cnsa2",
-          "xfail": "0.6",
-          "expect": {
-            "compliant": false
-          }
-        },
-        {
-          "standard": "pqc",
-          "xfail": "0.6",
           "expect": {
             "compliant": false,
             "rules_present": [
               {
-                "rule": "SBOM-PQC-ALG-UNKNOWN"
+                "rule": "SBOM-CNSA2-ALG-UNKNOWN",
+                "severity": "error"
+              },
+              {
+                "rule": "SBOM-CNSA2-000",
+                "severity": "error"
+              }
+            ]
+          }
+        },
+        {
+          "standard": "pqc",
+          "expect": {
+            "compliant": false,
+            "rules_present": [
+              {
+                "rule": "SBOM-PQC-ALG-UNKNOWN",
+                "severity": "warning"
+              },
+              {
+                "rule": "SBOM-PQC-000",
+                "severity": "error"
               }
             ]
           }
@@ -513,7 +526,6 @@
       "checks": [
         {
           "standard": "cnsa2",
-          "xfail": "0.6",
           "expect": {
             "compliant": false,
             "rules_present": [
@@ -526,11 +538,15 @@
         },
         {
           "standard": "pqc",
-          "xfail": "0.6",
           "expect": {
             "rules_present": [
               {
-                "rule": "SBOM-PQC-PROTO-UNKNOWN"
+                "rule": "SBOM-PQC-PROTO-UNKNOWN",
+                "severity": "warning"
+              },
+              {
+                "rule": "SBOM-PQC-000",
+                "severity": "error"
               }
             ]
           }

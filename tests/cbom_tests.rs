@@ -611,11 +611,11 @@ fn cyclonedx_17_ikev2_transform_objects_are_parsed_and_judged() {
     assert!(
         cnsa.iter().any(|(rule, sev, el, msg)| {
             *rule == "SBOM-CNSA2-PROTO-UNKNOWN"
-                && *sev == ViolationSeverity::Warning
+                && *sev == ViolationSeverity::Error
                 && el.as_deref() == Some("ipsec-opaque")
                 && msg.contains("IKEv2 group 1000")
         }),
-        "an unassigned key-exchange group must warn, not pass: {cnsa:?}"
+        "an unassigned key-exchange group must fail CNSA 2.0 closed, not pass: {cnsa:?}"
     );
 
     let pqc = messages(ComplianceLevel::NistPqc);
@@ -748,29 +748,32 @@ fn weak_crypto_protocols_and_cnsa2_verdict() {
 /// A CBOM whose only assets carry unclassifiable crypto refs (a certificate
 /// with a dangling opaque signatureAlgorithmRef, an IKEv2 protocol with
 /// opaque transform refs) must NOT report a clean 100% pass: every
-/// unverifiable asset produces a "cannot verify" Warning under both
-/// standards. Previously such CBOMs satisfied the inventory gate while
-/// receiving zero effective checks — a vacuous compliance claim.
+/// unverifiable asset is flagged (an Error under the CNSA 2.0 allowlist, a
+/// Warning under PQC), and since nothing could be identified the inventory
+/// gate fails too. Previously such CBOMs satisfied the gate while receiving
+/// zero effective checks — a vacuous compliance claim.
 #[test]
-fn unclassifiable_refs_warn_instead_of_vacuous_pass() {
+fn unclassifiable_refs_fail_instead_of_vacuous_pass() {
     let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-unclassifiable-refs.cdx.json")).unwrap();
 
-    for (level, cert_rule, proto_rule) in [
+    for (level, cert_rule, proto_rule, severity) in [
         (
             ComplianceLevel::Cnsa2,
             "SBOM-CNSA2-CERT-UNKNOWN",
             "SBOM-CNSA2-PROTO-UNKNOWN",
+            ViolationSeverity::Error,
         ),
         (
             ComplianceLevel::NistPqc,
             "SBOM-PQC-CERT-UNKNOWN",
             "SBOM-PQC-PROTO-UNKNOWN",
+            ViolationSeverity::Warning,
         ),
     ] {
         let result = ComplianceChecker::new(level).check(&parsed);
         assert!(
             result.violations.iter().any(|v| {
-                v.severity == ViolationSeverity::Warning
+                v.severity == severity
                     && v.rule_id == cert_rule
                     && v.message.contains("sig-algo-42")
             }),
@@ -783,15 +786,15 @@ fn unclassifiable_refs_warn_instead_of_vacuous_pass() {
         );
         assert!(
             result.violations.iter().any(|v| {
-                v.severity == ViolationSeverity::Warning
+                v.severity == severity
                     && v.rule_id == proto_rule
                     && v.message.contains("transform-encr-7")
             }),
             "{level:?}: opaque IKEv2 transform refs must produce {proto_rule}"
         );
         assert!(
-            result.warning_count >= 2,
-            "{level:?}: the unverifiable inventory must surface warnings, not a clean pass"
+            !result.is_compliant,
+            "{level:?}: an inventory nothing could be identified in must not pass"
         );
     }
 }

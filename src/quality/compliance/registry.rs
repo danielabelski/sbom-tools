@@ -1563,8 +1563,8 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
         "SBOM-CNSA2-ALG-UNKNOWN" => RuleMeta {
             sarif_id: "SBOM-CNSA2-ALG-UNKNOWN",
             name: "Cnsa2UnclassifiableAlgorithm",
-            short_description: "CNSA 2.0: algorithm cannot be classified — compliance cannot be verified",
-            default_severity: ViolationSeverity::Warning,
+            short_description: "CNSA 2.0: algorithm cannot be classified, so it cannot be shown to be on the allowlist",
+            default_severity: ViolationSeverity::Error,
             refs: &[(K::Cnsa2, "CNSA 2.0")],
             remediation: REMEDIATION_CNSA2,
         },
@@ -1582,8 +1582,8 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
         "SBOM-CNSA2-CERT-UNKNOWN" => RuleMeta {
             sarif_id: "SBOM-CNSA2-CERT-UNKNOWN",
             name: "Cnsa2CertificateUnverifiable",
-            short_description: "CNSA 2.0: certificate signature algorithm cannot be resolved — compliance cannot be verified",
-            default_severity: ViolationSeverity::Warning,
+            short_description: "CNSA 2.0: certificate signature algorithm cannot be resolved, so it cannot be shown to be on the allowlist",
+            default_severity: ViolationSeverity::Error,
             refs: &[(K::Cnsa2, "CNSA 2.0")],
             remediation: REMEDIATION_CNSA2,
         },
@@ -1612,8 +1612,8 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
         "SBOM-CNSA2-PROTO-UNKNOWN" => RuleMeta {
             sarif_id: "SBOM-CNSA2-PROTO-UNKNOWN",
             name: "Cnsa2ProtocolUnverifiable",
-            short_description: "CNSA 2.0: protocol crypto references cannot be resolved — compliance cannot be verified",
-            default_severity: ViolationSeverity::Warning,
+            short_description: "CNSA 2.0: protocol names no algorithm the classifier can identify, so it cannot be shown to be on the allowlist",
+            default_severity: ViolationSeverity::Error,
             refs: &[(K::Cnsa2, "CNSA 2.0")],
             remediation: REMEDIATION_CNSA2,
         },
@@ -1706,6 +1706,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
         },
         // Certificate signature-algorithm ref cannot be resolved/classified —
         // PQC readiness cannot be verified (Warning, never a silent pass).
+        "SBOM-PQC-ALG-UNKNOWN" => RuleMeta {
+            sarif_id: "SBOM-PQC-ALG-UNKNOWN",
+            name: "PqcUnclassifiableAlgorithm",
+            short_description: "NIST PQC: algorithm cannot be classified — readiness cannot be verified",
+            default_severity: ViolationSeverity::Warning,
+            refs: &[(K::NistPqc, "IR 8547 ipd")],
+            remediation: REMEDIATION_PQC_UNKNOWN,
+        },
         "SBOM-PQC-CERT-UNKNOWN" => RuleMeta {
             sarif_id: "SBOM-PQC-CERT-UNKNOWN",
             name: "PqcCertificateUnverifiable",
@@ -2421,6 +2429,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-PQC-000",
     "SBOM-PQC-001",
     "SBOM-PQC-012",
+    "SBOM-PQC-ALG-UNKNOWN",
     "SBOM-PQC-010",
     "SBOM-PQC-005",
     "SBOM-PQC-008",
@@ -2678,6 +2687,7 @@ pub const PQC_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-PQC-009",
     "SBOM-PQC-010",
     "SBOM-PQC-012",
+    "SBOM-PQC-ALG-UNKNOWN",
     "SBOM-PQC-KEY-001",
     "SBOM-PQC-CERT-001",
     "SBOM-PQC-CERT-UNKNOWN",
