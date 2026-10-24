@@ -1,0 +1,577 @@
+---
+source: tests/compliance_snapshots.rs
+---
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "sbom-tools",
+          "version": "[VERSION]",
+          "informationUri": "https://github.com/binarly-io/sbom-tools",
+          "rules": [
+            {
+              "id": "SBOM-NTIA-AUTHOR",
+              "name": "NtiaAuthor",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Author/creator information"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-NAME",
+              "name": "NtiaComponentName",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Component name"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-VERSION",
+              "name": "NtiaVersion",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Component version string"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-SUPPLIER",
+              "name": "NtiaSupplier",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Supplier name"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-IDENTIFIER",
+              "name": "NtiaUniqueIdentifier",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Unique identifier (PURL/CPE/SWID)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-DEPENDENCY",
+              "name": "NtiaDependency",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Dependency relationship"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-TIMESTAMP",
+              "name": "NtiaTimestamp",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: Creation timestamp"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-NTIA-GENERAL",
+              "name": "NtiaGeneralRequirement",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: General requirement"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
+              "id": "SBOM-FSCT-AUTHOR",
+              "name": "FsctAuthorName",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.1.1 (Minimum): Author Name — person/organization author, not tool-only"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-AUTHOR-TOOL",
+              "name": "FsctAuthorTool",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.1.1 (Recommended): tool(s) and version(s) that assisted SBOM creation"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-TIMESTAMP",
+              "name": "FsctTimestamp",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.1.2 (Minimum): creation timestamp in a common international format (ISO 8601)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-SBOM-TYPE",
+              "name": "FsctSbomType",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.1.3 (optional/aspirational): SBOM Type declared (design/source/build/analyzed/deployed/runtime)"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-PRIMARY",
+              "name": "FsctPrimaryComponent",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.1.4: Primary Component (root of dependencies) identified as the subject of the SBOM"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-DIRECT-DEPS",
+              "name": "FsctDirectDependencies",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2 / §2.3.3 (Minimum): all static direct dependencies of the Primary Component identified"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-TRANSITIVE-DEPS",
+              "name": "FsctTransitiveDependencies",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2 (Recommended): subcomponent levels beyond direct dependencies identified"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-DYNAMIC-DEPS",
+              "name": "FsctDynamicDependencies",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2 / §2.2.2.6 (Aspirational): dynamic and/or remote dependencies uniquely identified"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-COMPONENT-NAME",
+              "name": "FsctComponentName",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.1 (Minimum): commonly used public name declared for every component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-VERSION",
+              "name": "FsctComponentVersion",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.2 (Minimum): supplier-provided version string (or authored hash as the documented fallback)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-SUPPLIER",
+              "name": "FsctSupplierName",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.3 (Minimum): Supplier Name declared for all components (explicit 'unknown' permitted)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-IDENTIFIER",
+              "name": "FsctUniqueIdentifier",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.4 (Minimum): globally unique identifier per component (PURL/CPE/SWID/SWHID; hash accepted)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-IDENTIFIER-MULTI",
+              "name": "FsctIdentifierMultiplicity",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.4 (Recommended): as many globally unique identifiers as available"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-HASH",
+              "name": "FsctCryptographicHash",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.5 (Minimum): author-provided cryptographic hash with algorithm, or explicit unknown"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-HASH-PRIMARY-SHA2",
+              "name": "FsctPrimaryHashSha2",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.5 (Recommended): Primary Component hashed; SHA-256-or-stronger SHA-2 hash on hashed components"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-RELATIONSHIP",
+              "name": "FsctRelationship",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.6 (Minimum): relationships declared for the Primary Component and its direct dependencies"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-RELATIONSHIP-ALL",
+              "name": "FsctRelationshipAll",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.6 (Recommended): relationships declared for ALL included components (no orphans)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-COMPLETENESS",
+              "name": "FsctRelationshipCompleteness",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.6.4 (supplemental/optional): relationship-completeness assertion recorded"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-LICENSE-PRIMARY",
+              "name": "FsctLicensePrimary",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.7 (Minimum): license information for the Primary Component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-LICENSE-COVERAGE",
+              "name": "FsctLicenseCoverage",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.7 (Recommended): license information for as many components as possible"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-LICENSE-ALL",
+              "name": "FsctLicenseAll",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.7 (Aspirational): license information incl. concluded-license attestation for ALL components"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-COPYRIGHT-PRIMARY",
+              "name": "FsctCopyrightPrimary",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.8 (Minimum): copyright notice for the Primary Component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-COPYRIGHT-COVERAGE",
+              "name": "FsctCopyrightCoverage",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.8 (Recommended): copyright notices for as many components as possible"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-COPYRIGHT-ALL",
+              "name": "FsctCopyrightAll",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.2.2.8 (Aspirational): copyright notice on every listed component"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-NOASSERTION",
+              "name": "FsctNoAssertion",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.3.1 (Minimum): baseline attributes populated or explicitly declared no-assertion/no-value"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-UPSTREAM-SBOM",
+              "name": "FsctUpstreamSbom",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.3.3 (Recommended): upstream supplier SBOM data provided or linked for third-party direct dependencies"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-SIGNATURE",
+              "name": "FsctSignature",
+              "shortDescription": {
+                "text": "CISA FSCT 3e §2.4 (supplemental): SBOM carries a verifiable digital signature"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            },
+            {
+              "id": "SBOM-FSCT-GENERAL",
+              "name": "FsctGeneralRequirement",
+              "shortDescription": {
+                "text": "CISA FSCT 3e: general baseline-attribute requirement"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "SBOM-NTIA-SUPPLIER",
+          "level": "error",
+          "message": {
+            "text": "NTIA Minimum Elements: Component 'lodash' missing supplier/manufacturer (Requirement: NTIA: Supplier information) [Element: lodash]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "NTIA:NTIA Minimum Elements"
+            ],
+            "standardHelpUris": [
+              "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            ],
+            "componentId": "pkg:npm/lodash@4.17.21"
+          }
+        },
+        {
+          "ruleId": "SBOM-NTIA-SUPPLIER",
+          "level": "error",
+          "message": {
+            "text": "NTIA Minimum Elements: Component 'express' missing supplier/manufacturer (Requirement: NTIA: Supplier information) [Element: express]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "NTIA:NTIA Minimum Elements"
+            ],
+            "standardHelpUris": [
+              "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            ],
+            "componentId": "pkg:npm/express@4.18.2"
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-DIRECT-DEPS",
+          "level": "error",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2/§2.3.3] No direct dependencies of the Primary Component are identified, and no completeness declaration covers their absence — identify all static direct dependencies or declare the enumeration's completeness (Requirement: CISA FSCT 3e §2.2.2/§2.3.3: Direct dependencies (Minimum Expected)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2",
+              "CISA-FSCT-3e:§2.3.3"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024",
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-SUPPLIER",
+          "level": "error",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2.3] 2/2 component(s) declare no Supplier Name (an explicit 'unknown' is a permitted last resort; silent absence is not): lodash, express (Requirement: CISA FSCT 3e §2.2.2.3: Supplier Name (Minimum Expected)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2.3"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ],
+            "affected": 2,
+            "total": 2
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-HASH",
+          "level": "error",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2.5] 1/2 component(s) carry no author-provided cryptographic hash (enrichment-fetched hashes are not author evidence): express (Requirement: CISA FSCT 3e §2.2.2.5: Cryptographic Hash (Minimum Expected)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2.5"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ],
+            "affected": 1,
+            "total": 2
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-IDENTIFIER-MULTI",
+          "level": "warning",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2.4] 2/2 component(s) declare fewer than two globally unique identifier kinds (PURL/CPE/SWHID/SWID) — list as many as are available (heuristic threshold; profile policy): lodash, express (Requirement: CISA FSCT 3e §2.2.2.4: Unique Identifier multiplicity (Recommended Practice)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2.4"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ],
+            "affected": 2,
+            "total": 2
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-COMPLETENESS",
+          "level": "warning",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2.6.4] No relationship-completeness assertion (Unknown/None/Partial/Known) is recorded (CycloneDX: compositions.aggregate) (Requirement: CISA FSCT 3e §2.2.2.6.4: Relationship completeness (supplemental, optional)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2.6.4",
+              "CISA-FSCT-3e:§2.3.3"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024",
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-FSCT-DYNAMIC-DEPS",
+          "level": "note",
+          "message": {
+            "text": "CISA Framing Software Component Transparency (3rd ed.): [CISA FSCT 3e §2.2.2/§2.2.2.6] No dynamic, runtime, or provided dependency relationships are identified (DYNAMIC_LINK / RUNTIME_DEPENDENCY_OF / PROVIDED_DEPENDENCY_OF) — readiness note for the aspirational goal of identifying dynamic and remote dependencies (Requirement: CISA FSCT 3e §2.2.2/§2.2.2.6: Dynamic and remote dependencies (Aspirational Goal)) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "CISA-FSCT-3e:§2.2.2",
+              "CISA-FSCT-3e:§2.2.2.6"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024",
+              "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "applicable": true,
+        "standards": [
+          {
+            "profile": "NTIA Minimum Elements",
+            "applicable": true,
+            "overallScore": 33.0,
+            "compliant": false
+          },
+          {
+            "profile": "CISA Framing Software Component Transparency (3rd ed.)",
+            "applicable": true,
+            "overallScore": 16.0,
+            "compliant": false
+          }
+        ]
+      }
+    }
+  ]
+}

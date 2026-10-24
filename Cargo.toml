@@ -71,7 +71,7 @@ sha2 = "0.11"
 
 # Utilities
 chrono = { version = "0.4.44", features = ["serde"] }
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
 rayon = "1.12"
 thiserror = "2.0"
 anyhow = "1.0"
@@ -112,6 +112,10 @@ harness = false
 
 [[bench]]
 name = "hot_paths"
+harness = false
+
+[[bench]]
+name = "compliance"
 harness = false
 
 [[test]]

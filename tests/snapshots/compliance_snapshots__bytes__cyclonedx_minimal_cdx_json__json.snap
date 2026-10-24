@@ -1,0 +1,336 @@
+---
+source: tests/compliance_snapshots.rs
+---
+[
+  {
+    "is_compliant": false,
+    "level": "NtiaMinimum",
+    "violations": [
+      {
+        "severity": "Error",
+        "category": "ComponentIdentification",
+        "message": "Component 'test-app' missing unique identifier (PURL/CPE/SWHID/SWID)",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "NTIA Minimum Elements: Other Unique Identifiers",
+        "rule_id": "SBOM-NTIA-IDENTIFIER",
+        "sarif_rule_id": "SBOM-NTIA-IDENTIFIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "Component 'test-app' missing supplier/manufacturer",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "NTIA: Supplier information",
+        "rule_id": "SBOM-NTIA-SUPPLIER",
+        "sarif_rule_id": "SBOM-NTIA-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "Component 'lodash' missing supplier/manufacturer",
+        "element": "lodash",
+        "component_id": "pkg:npm/lodash@4.17.21",
+        "requirement": "NTIA: Supplier information",
+        "rule_id": "SBOM-NTIA-SUPPLIER",
+        "sarif_rule_id": "SBOM-NTIA-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "Component 'express' missing supplier/manufacturer",
+        "element": "express",
+        "component_id": "pkg:npm/express@4.18.2",
+        "requirement": "NTIA: Supplier information",
+        "rule_id": "SBOM-NTIA-SUPPLIER",
+        "sarif_rule_id": "SBOM-NTIA-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "DependencyInfo",
+        "message": "Primary component 'test-app' participates in no dependency relationship",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "NTIA: Dependency relationships",
+        "rule_id": "SBOM-NTIA-DEPENDENCY",
+        "sarif_rule_id": "SBOM-NTIA-DEPENDENCY",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Info",
+        "category": "FormatSpecific",
+        "message": "Component 'test-app' may be missing bom-ref",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "CycloneDX: bom-ref for dependency tracking",
+        "rule_id": "SBOM-NTIA-GENERAL",
+        "sarif_rule_id": "SBOM-NTIA-GENERAL",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      }
+    ],
+    "error_count": 4,
+    "warning_count": 1,
+    "info_count": 1,
+    "applicability": {
+      "status": "applicable"
+    }
+  },
+  {
+    "is_compliant": false,
+    "level": "Cisa2026",
+    "violations": [
+      {
+        "severity": "Error",
+        "category": "DocumentMetadata",
+        "message": "[CISA 2026] SBOM Author missing: no Person or Organization creator names the entity that created the SBOM data (tool-only creator lists do not satisfy the element — the author is the entity operating the tool, not the tool itself)",
+        "element": null,
+        "requirement": "CISA 2026 Minimum Elements: SBOM Author",
+        "rule_id": "SBOM-CISA2026-AUTHOR",
+        "sarif_rule_id": "SBOM-CISA2026-AUTHOR",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "SBOM Author",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "DocumentMetadata",
+        "message": "[CISA 2026] No SBOM Author Signature found in the document (CycloneDX JSF signature or SPDX 3 verifiedUsing signature); SPDX 2.x cannot express one in-document and detached signatures are invisible to this check",
+        "element": null,
+        "requirement": "CISA 2026 Minimum Elements: SBOM Author Signature",
+        "rule_id": "SBOM-CISA2026-SIGNATURE",
+        "sarif_rule_id": "SBOM-CISA2026-SIGNATURE",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "SBOM Author Signature",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "DocumentMetadata",
+        "message": "[CISA 2026] SBOM Generation Context missing: no software lifecycle phase is declared (CycloneDX 1.5+ metadata.lifecycles, e.g. 'pre-build', 'build', 'post-build'; SPDX 2.x has no standard field)",
+        "element": null,
+        "requirement": "CISA 2026 Minimum Elements: SBOM Generation Context",
+        "rule_id": "SBOM-CISA2026-GENERATION-CONTEXT",
+        "sarif_rule_id": "SBOM-CISA2026-GENERATION-CONTEXT",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "SBOM Generation Context",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "[CISA 2026] Component 'test-app' names no producer (author/originator, manufacturer or supplier) and is not explicitly marked as of unknown provenance",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "CISA 2026 Minimum Elements: Component Producer",
+        "rule_id": "SBOM-CISA2026-PRODUCER",
+        "sarif_rule_id": "SBOM-CISA2026-PRODUCER",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Producer",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "ComponentIdentification",
+        "message": "[CISA 2026] Component 'test-app' has no machine-processable identifier (CPE or PURL are named by the element; SWHID/SWID also qualify)",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "CISA 2026 Minimum Elements: Component Identifiers",
+        "rule_id": "SBOM-CISA2026-IDENTIFIER",
+        "sarif_rule_id": "SBOM-CISA2026-IDENTIFIER",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Identifiers",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "IntegrityInfo",
+        "message": "[CISA 2026] Component 'test-app' carries no cryptographic hash of the executable component artifact (explicitly indicate the value is unknown when the artifact is not available to the SBOM author)",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "CISA 2026 Minimum Elements: Component Hash Value",
+        "rule_id": "SBOM-CISA2026-HASH",
+        "sarif_rule_id": "SBOM-CISA2026-HASH",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Hash Value",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "LicenseInfo",
+        "message": "[CISA 2026] Component 'test-app' has no license information and no explicit unknown indication (prefer SPDX identifiers; use NOASSERTION when the license is unknown to the author)",
+        "element": "test-app",
+        "component_id": "test-app",
+        "requirement": "CISA 2026 Minimum Elements: Component License",
+        "rule_id": "SBOM-CISA2026-LICENSE",
+        "sarif_rule_id": "SBOM-CISA2026-LICENSE",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component License",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "[CISA 2026] Component 'lodash' names no producer (author/originator, manufacturer or supplier) and is not explicitly marked as of unknown provenance",
+        "element": "lodash",
+        "component_id": "pkg:npm/lodash@4.17.21",
+        "requirement": "CISA 2026 Minimum Elements: Component Producer",
+        "rule_id": "SBOM-CISA2026-PRODUCER",
+        "sarif_rule_id": "SBOM-CISA2026-PRODUCER",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Producer",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "IntegrityInfo",
+        "message": "[CISA 2026] Component 'lodash' carries no cryptographic hash of the executable component artifact (explicitly indicate the value is unknown when the artifact is not available to the SBOM author)",
+        "element": "lodash",
+        "component_id": "pkg:npm/lodash@4.17.21",
+        "requirement": "CISA 2026 Minimum Elements: Component Hash Value",
+        "rule_id": "SBOM-CISA2026-HASH",
+        "sarif_rule_id": "SBOM-CISA2026-HASH",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Hash Value",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "[CISA 2026] Component 'express' names no producer (author/originator, manufacturer or supplier) and is not explicitly marked as of unknown provenance",
+        "element": "express",
+        "component_id": "pkg:npm/express@4.18.2",
+        "requirement": "CISA 2026 Minimum Elements: Component Producer",
+        "rule_id": "SBOM-CISA2026-PRODUCER",
+        "sarif_rule_id": "SBOM-CISA2026-PRODUCER",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Producer",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "IntegrityInfo",
+        "message": "[CISA 2026] Component 'express' carries no cryptographic hash of the executable component artifact (explicitly indicate the value is unknown when the artifact is not available to the SBOM author)",
+        "element": "express",
+        "component_id": "pkg:npm/express@4.18.2",
+        "requirement": "CISA 2026 Minimum Elements: Component Hash Value",
+        "rule_id": "SBOM-CISA2026-HASH",
+        "sarif_rule_id": "SBOM-CISA2026-HASH",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Component Hash Value",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "DependencyInfo",
+        "message": "[CISA 2026] Coverage: the SBOM does not declare its completeness (CycloneDX compositions aggregate); information gaps must be explicitly stated as unknown or deliberately withheld",
+        "element": null,
+        "requirement": "CISA 2026 Minimum Elements: Coverage / Explicitly Identifying Unknown Information",
+        "rule_id": "SBOM-CISA2026-COVERAGE",
+        "sarif_rule_id": "SBOM-CISA2026-COVERAGE",
+        "standard_refs": [
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Coverage",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          },
+          {
+            "standard": "CisaMinimum2026",
+            "id": "Explicitly Identifying Unknown Information",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      }
+    ],
+    "error_count": 9,
+    "warning_count": 3,
+    "info_count": 0,
+    "applicability": {
+      "status": "applicable"
+    }
+  }
+]

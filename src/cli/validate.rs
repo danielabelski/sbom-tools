@@ -124,12 +124,19 @@ pub fn run_validate(
         results.push(checker.check(parsed.sbom()));
     }
 
+    // Inputs that make machine output reproducible: OSCAL derives its UUIDs
+    // from the SBOM digest and stamps the --as-of instant.
+    let provenance = OutputProvenance {
+        sbom_digest: sha256_hex(parsed.raw_content.as_bytes()),
+        as_of,
+    };
+
     if results.len() == 1 {
         let result = &results[0];
         if summary {
             write_compliance_summary(result, output_file)?;
         } else {
-            write_compliance_output(result, output, output_file)?;
+            write_compliance_output(result, output, output_file, &provenance)?;
         }
 
         if result.error_count > 0 {
@@ -143,7 +150,7 @@ pub fn run_validate(
         if summary {
             write_multi_compliance_summary(&results, output_file)?;
         } else {
-            write_multi_compliance_output(&results, output, output_file)?;
+            write_multi_compliance_output(&results, output, output_file, &provenance)?;
         }
 
         let has_errors = results.iter().any(|r| r.error_count > 0);
@@ -159,10 +166,27 @@ pub fn run_validate(
     Ok(exit_codes::SUCCESS)
 }
 
+/// What a machine-readable report needs to know about the run itself.
+struct OutputProvenance {
+    /// Lowercase hex SHA-256 of the SBOM bytes as read.
+    sbom_digest: String,
+    /// The pinned evaluation instant (`--as-of`), if any.
+    as_of: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
 fn write_compliance_output(
     result: &ComplianceResult,
     output: ReportFormat,
     output_file: Option<PathBuf>,
+    provenance: &OutputProvenance,
 ) -> Result<()> {
     let target = OutputTarget::from_option(output_file);
 
@@ -170,9 +194,11 @@ fn write_compliance_output(
         ReportFormat::Json => serde_json::to_string_pretty(result)
             .map_err(|e| anyhow::anyhow!("Failed to serialize compliance JSON: {e}"))?,
         ReportFormat::Sarif => generate_compliance_sarif(result)?,
-        ReportFormat::OscalJson => {
-            crate::reports::oscal::generate_assessment_results(std::slice::from_ref(result))?
-        }
+        ReportFormat::OscalJson => crate::reports::oscal::generate_assessment_results_at(
+            std::slice::from_ref(result),
+            &provenance.sbom_digest,
+            provenance.as_of,
+        )?,
         _ => format_compliance_text(result),
     };
 
@@ -227,6 +253,7 @@ fn write_multi_compliance_output(
     results: &[ComplianceResult],
     output: ReportFormat,
     output_file: Option<PathBuf>,
+    provenance: &OutputProvenance,
 ) -> Result<()> {
     let target = OutputTarget::from_option(output_file);
 
@@ -234,7 +261,11 @@ fn write_multi_compliance_output(
         ReportFormat::Json => serde_json::to_string_pretty(results)
             .map_err(|e| anyhow::anyhow!("Failed to serialize compliance JSON: {e}"))?,
         ReportFormat::Sarif => crate::reports::generate_multi_compliance_sarif(results)?,
-        ReportFormat::OscalJson => crate::reports::oscal::generate_assessment_results(results)?,
+        ReportFormat::OscalJson => crate::reports::oscal::generate_assessment_results_at(
+            results,
+            &provenance.sbom_digest,
+            provenance.as_of,
+        )?,
         _ => {
             let mut parts = Vec::new();
             for result in results {
