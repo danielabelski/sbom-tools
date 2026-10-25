@@ -72,9 +72,9 @@ as_of: 2026-10-12T00:00:00Z
   W SBOM-EO14028-AUTOGEN  -
   W SBOM-EO14028-DISCLOSURE  -
   W SBOM-EO14028-INTEGRITY  - (1/1)
-[Cnsa2] NON-COMPLIANT · E1 W1 I0
+[Cnsa2] NON-COMPLIANT · E2 W0 I0
   E SBOM-CNSA2-PROTO-002  crypto/protocol/ipsec-legacy
-  W SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ipsec-opaque
+  E SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ipsec-opaque
 [NistPqc] NON-COMPLIANT · E1 W3 I0
   E SBOM-PQC-PROTO-002  crypto/protocol/ipsec-legacy
   W SBOM-PQC-012  crypto/algorithm/aes-256-gcm

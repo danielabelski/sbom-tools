@@ -2529,8 +2529,7 @@ mod tests {
                 result
                     .violations
                     .iter()
-                    .any(|v| v.severity == ViolationSeverity::Error
-                        && v.message.contains("No cryptographic inventory")),
+                    .any(|v| v.severity == ViolationSeverity::Error && v.rule_id.ends_with("-000")),
                 "{level:?} must emit an inventory-absent error"
             );
         }
@@ -2671,25 +2670,49 @@ mod tests {
         assert!(result.is_compliant);
     }
 
-    /// Unrecognizable algorithms must not silently pass CNSA 2.0: they get a
-    /// "cannot verify" Warning (not an Error, not a pass).
+    /// Unrecognizable algorithms fail CNSA 2.0 closed: it is an allowlist,
+    /// so an algorithm that cannot be identified cannot be shown to comply.
+    /// They also do not count as inventory, so a CBOM of unknowns fails the
+    /// CNSA2-000 gate.
     #[test]
-    fn cnsa2_unknown_algorithm_warns() {
+    fn cnsa2_unknown_algorithm_fails_closed() {
         let sbom = make_crypto_sbom(&[("mystery", "proprietary-frobnicator", None, None)]);
         let result = ComplianceChecker::new(ComplianceLevel::Cnsa2).check(&sbom);
         assert!(
             result.violations.iter().any(|v| {
-                v.severity == ViolationSeverity::Warning && v.rule_id == "SBOM-CNSA2-ALG-UNKNOWN"
+                v.severity == ViolationSeverity::Error && v.rule_id == "SBOM-CNSA2-ALG-UNKNOWN"
             }),
-            "unknown algorithm must produce the cannot-verify warning"
+            "unknown algorithm must fail closed with SBOM-CNSA2-ALG-UNKNOWN"
         );
         assert!(
-            !result
+            result
                 .violations
                 .iter()
-                .any(|v| v.severity == ViolationSeverity::Error
-                    && v.rule_id.starts_with("SBOM-CNSA2-ALG")),
-            "unknown algorithm must not produce an algorithm Error"
+                .any(|v| v.rule_id == "SBOM-CNSA2-000"),
+            "an unidentifiable asset must not satisfy the inventory gate"
+        );
+        assert!(!result.is_compliant);
+    }
+
+    /// Under NIST PQC an unrecognizable algorithm warns (it cannot be
+    /// verified) instead of passing silently, and does not count as
+    /// inventory.
+    #[test]
+    fn pqc_unknown_algorithm_warns_and_is_not_inventory() {
+        let sbom = make_crypto_sbom(&[("mystery", "proprietary-frobnicator", None, Some(5))]);
+        let result = ComplianceChecker::new(ComplianceLevel::NistPqc).check(&sbom);
+        assert!(
+            result.violations.iter().any(|v| {
+                v.severity == ViolationSeverity::Warning && v.rule_id == "SBOM-PQC-ALG-UNKNOWN"
+            }),
+            "unknown algorithm must warn with SBOM-PQC-ALG-UNKNOWN even when it declares a level"
+        );
+        assert!(
+            result
+                .violations
+                .iter()
+                .any(|v| v.rule_id == "SBOM-PQC-000"),
+            "an unidentifiable asset must not satisfy the inventory gate"
         );
     }
 
@@ -3158,19 +3181,19 @@ mod tests {
     }
 
     /// A certificate whose signature-algorithm ref cannot be resolved or
-    /// classified must produce a "cannot verify" Warning under both
-    /// standards — previously it counted as evaluated and passed silently
-    /// (certificate-only CBOMs reported 100% compliant).
+    /// classified fails CNSA 2.0 closed and warns under PQC — previously it
+    /// counted as evaluated and passed silently (certificate-only CBOMs
+    /// reported 100% compliant).
     #[test]
-    fn cert_unknown_signature_ref_warns_both_standards() {
+    fn cert_unknown_signature_ref_is_flagged_by_both_standards() {
         let sbom = make_cert_sbom("sig-algo-42", None);
 
         let cnsa = ComplianceChecker::new(ComplianceLevel::Cnsa2).check(&sbom);
         assert!(
             cnsa.violations.iter().any(|v| {
-                v.severity == ViolationSeverity::Warning && v.rule_id == "SBOM-CNSA2-CERT-UNKNOWN"
+                v.severity == ViolationSeverity::Error && v.rule_id == "SBOM-CNSA2-CERT-UNKNOWN"
             }),
-            "opaque dangling sig ref must warn under CNSA 2.0; got {:?}",
+            "opaque dangling sig ref must fail CNSA 2.0 closed; got {:?}",
             cnsa.violations
                 .iter()
                 .map(|v| (v.rule_id, v.message.clone()))
@@ -3181,7 +3204,7 @@ mod tests {
                 .violations
                 .iter()
                 .any(|v| v.rule_id == "SBOM-CNSA2-CERT-001"),
-            "an unverifiable ref is a Warning, not a CERT-001 Error"
+            "an unverifiable ref is CERT-UNKNOWN, not CERT-001"
         );
 
         let pqc = ComplianceChecker::new(ComplianceLevel::NistPqc).check(&sbom);
@@ -3208,10 +3231,11 @@ mod tests {
     }
 
     /// A protocol asset with nothing evaluable (SSH, no version, no cipher
-    /// suites, no refs) must warn instead of silently counting as evaluated
-    /// and suppressing the no-inventory gate.
+    /// suites, no refs) is flagged — an Error under CNSA 2.0, a Warning under
+    /// PQC — instead of silently counting as evaluated and suppressing the
+    /// no-inventory gate.
     #[test]
-    fn protocol_without_evidence_warns_both_standards() {
+    fn protocol_without_evidence_is_flagged_by_both_standards() {
         use crate::model::{
             ComponentType, CryptoAssetType, CryptoProperties, ProtocolProperties, ProtocolType,
         };
@@ -3224,17 +3248,25 @@ mod tests {
         );
         sbom.add_component(c);
 
-        for (level, rule) in [
-            (ComplianceLevel::Cnsa2, "SBOM-CNSA2-PROTO-UNKNOWN"),
-            (ComplianceLevel::NistPqc, "SBOM-PQC-PROTO-UNKNOWN"),
+        for (level, rule, severity) in [
+            (
+                ComplianceLevel::Cnsa2,
+                "SBOM-CNSA2-PROTO-UNKNOWN",
+                ViolationSeverity::Error,
+            ),
+            (
+                ComplianceLevel::NistPqc,
+                "SBOM-PQC-PROTO-UNKNOWN",
+                ViolationSeverity::Warning,
+            ),
         ] {
             let result = ComplianceChecker::new(level).check(&sbom);
             assert!(
                 result
                     .violations
                     .iter()
-                    .any(|v| v.severity == ViolationSeverity::Warning && v.rule_id == rule),
-                "{level:?}: evidence-free protocol must warn with {rule}; got {:?}",
+                    .any(|v| v.severity == severity && v.rule_id == rule),
+                "{level:?}: evidence-free protocol must be flagged with {rule}; got {:?}",
                 result
                     .violations
                     .iter()
@@ -3259,11 +3291,11 @@ mod tests {
     }
 
     /// An IKEv2 protocol whose transform refs are all opaque and
-    /// unresolvable must warn under both standards — previously it counted
-    /// as evaluated while receiving zero effective checks (vacuous 100%
-    /// compliant CBOMs).
+    /// unresolvable is flagged by both standards (Error under CNSA 2.0,
+    /// Warning under PQC) — previously it counted as evaluated while
+    /// receiving zero effective checks (vacuous 100% compliant CBOMs).
     #[test]
-    fn ikev2_opaque_transform_refs_warn_both_standards() {
+    fn ikev2_opaque_transform_refs_are_flagged_by_both_standards() {
         use crate::model::{
             ComponentType, CryptoAssetType, CryptoProperties, Ikev2TransformTypes,
             ProtocolProperties, ProtocolType,
@@ -3287,18 +3319,26 @@ mod tests {
         );
         sbom.add_component(c);
 
-        for (level, rule) in [
-            (ComplianceLevel::Cnsa2, "SBOM-CNSA2-PROTO-UNKNOWN"),
-            (ComplianceLevel::NistPqc, "SBOM-PQC-PROTO-UNKNOWN"),
+        for (level, rule, severity) in [
+            (
+                ComplianceLevel::Cnsa2,
+                "SBOM-CNSA2-PROTO-UNKNOWN",
+                ViolationSeverity::Error,
+            ),
+            (
+                ComplianceLevel::NistPqc,
+                "SBOM-PQC-PROTO-UNKNOWN",
+                ViolationSeverity::Warning,
+            ),
         ] {
             let result = ComplianceChecker::new(level).check(&sbom);
             assert!(
                 result.violations.iter().any(|v| {
-                    v.severity == ViolationSeverity::Warning
+                    v.severity == severity
                         && v.rule_id == rule
                         && v.message.contains("transform-encr-7")
                 }),
-                "{level:?}: opaque IKEv2 transforms must warn with {rule}; got {:?}",
+                "{level:?}: opaque IKEv2 transforms must be flagged with {rule}; got {:?}",
                 result
                     .violations
                     .iter()

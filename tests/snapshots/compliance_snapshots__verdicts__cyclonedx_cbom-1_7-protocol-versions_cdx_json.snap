@@ -45,11 +45,13 @@ as_of: 2026-10-12T00:00:00Z
 [Eo14028] NON-COMPLIANT · E1 W1 I0
   E SBOM-EO14028-INVENTORY  -
   W SBOM-EO14028-DISCLOSURE  -
-[Cnsa2] compliant · E0 W3 I0
-  W SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ike
-  W SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/quic
-  W SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ssh
-[NistPqc] compliant · E0 W3 I0
+[Cnsa2] NON-COMPLIANT · E4 W0 I0
+  E SBOM-CNSA2-000  -
+  E SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ike
+  E SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/quic
+  E SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/ssh
+[NistPqc] NON-COMPLIANT · E1 W3 I0
+  E SBOM-PQC-000  -
   W SBOM-PQC-PROTO-UNKNOWN  crypto/protocol/ike
   W SBOM-PQC-PROTO-UNKNOWN  crypto/protocol/quic
   W SBOM-PQC-PROTO-UNKNOWN  crypto/protocol/ssh

@@ -17,7 +17,7 @@ source: tests/compliance_snapshots.rs
         "description": "Validation results for CNSA 2.0, derived only from the supplied SBOM.",
         "findings": [
           {
-            "description": "Overall verdict for CNSA 2.0: 10 error(s), 2 warning(s), 0 informational finding(s).",
+            "description": "Overall verdict for CNSA 2.0: 12 error(s), 0 warning(s), 0 informational finding(s).",
             "target": {
               "status": {
                 "state": "not-satisfied"
@@ -148,7 +148,7 @@ source: tests/compliance_snapshots.rs
             "uuid": "1752f8da-ae41-5004-85b0-16a551e5c8b5"
           },
           {
-            "description": "'X25519-ML-KEM-768' cannot be classified (no recognizable algorithm family, OID, or name); unable to verify against the CNSA 2.0 allowlist",
+            "description": "'X25519-ML-KEM-768' is a hybrid combiner whose component algorithms cannot be identified, so it cannot be shown to be on the CNSA 2.0 allowlist",
             "related-observations": [
               {
                 "observation-uuid": "3220ae25-65d9-5fd3-9c05-68b65d7001f2"
@@ -216,7 +216,7 @@ source: tests/compliance_snapshots.rs
             "uuid": "2646605e-b98e-5f95-b507-a67eac96b755"
           },
           {
-            "description": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; unable to verify against the CNSA 2.0 allowlist",
+            "description": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; they cannot be shown to be on the CNSA 2.0 allowlist",
             "related-observations": [
               {
                 "observation-uuid": "15fb8942-aed8-5e80-861b-bcacf34d49a8"
@@ -509,7 +509,7 @@ source: tests/compliance_snapshots.rs
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "'X25519-ML-KEM-768' cannot be classified (no recognizable algorithm family, OID, or name); unable to verify against the CNSA 2.0 allowlist",
+            "description": "'X25519-ML-KEM-768' is a hybrid combiner whose component algorithms cannot be identified, so it cannot be shown to be on the CNSA 2.0 allowlist",
             "methods": [
               "EXAMINE"
             ],
@@ -517,7 +517,7 @@ source: tests/compliance_snapshots.rs
               {
                 "name": "severity",
                 "ns": "https://sbom.tools/ns/oscal",
-                "value": "warning"
+                "value": "error"
               },
               {
                 "name": "standard-reference",
@@ -665,7 +665,7 @@ source: tests/compliance_snapshots.rs
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; unable to verify against the CNSA 2.0 allowlist",
+            "description": "Protocol 'TLS 1.3 (PQC Hybrid)' has crypto references that cannot be resolved or classified: crypto/algorithm/hybrid-kem; they cannot be shown to be on the CNSA 2.0 allowlist",
             "methods": [
               "EXAMINE"
             ],
@@ -673,7 +673,7 @@ source: tests/compliance_snapshots.rs
               {
                 "name": "severity",
                 "ns": "https://sbom.tools/ns/oscal",
-                "value": "warning"
+                "value": "error"
               },
               {
                 "name": "standard-reference",
@@ -727,12 +727,12 @@ source: tests/compliance_snapshots.rs
           {
             "name": "error-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "10"
+            "value": "12"
           },
           {
             "name": "warning-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "2"
+            "value": "0"
           },
           {
             "name": "info-count",

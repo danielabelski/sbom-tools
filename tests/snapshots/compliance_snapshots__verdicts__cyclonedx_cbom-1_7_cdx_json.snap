@@ -66,7 +66,7 @@ as_of: 2026-10-12T00:00:00Z
   E SBOM-EO14028-SUPPLIER  - (3/3)
   W SBOM-EO14028-DISCLOSURE  -
   W SBOM-EO14028-INTEGRITY  - (2/3)
-[Cnsa2] NON-COMPLIANT · E10 W2 I0
+[Cnsa2] NON-COMPLIANT · E12 W0 I0
   E SBOM-CNSA2-ALG-003  crypto/algorithm/ml-kem-768
   E SBOM-CNSA2-ALG-004  crypto/algorithm/ml-dsa-65
   E SBOM-CNSA2-ALG-006  crypto/algorithm/ecdsa-p521
@@ -75,9 +75,9 @@ as_of: 2026-10-12T00:00:00Z
   E SBOM-CNSA2-ALG-007  crypto/algorithm/ml-dsa-65
   E SBOM-CNSA2-ALG-007  crypto/algorithm/ml-kem-768
   E SBOM-CNSA2-ALG-008  crypto/algorithm/slh-dsa-shake-256s
+  E SBOM-CNSA2-ALG-UNKNOWN  crypto/algorithm/hybrid-kem
   E SBOM-CNSA2-PROTO-002  crypto/protocol/tls13-pqc ×2
-  W SBOM-CNSA2-ALG-UNKNOWN  crypto/algorithm/hybrid-kem
-  W SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/tls13-pqc
+  E SBOM-CNSA2-PROTO-UNKNOWN  crypto/protocol/tls13-pqc
 [NistPqc] NON-COMPLIANT · E3 W1 I7
   E SBOM-PQC-001  crypto/algorithm/ecdsa-p521
   E SBOM-PQC-001  crypto/algorithm/x25519
