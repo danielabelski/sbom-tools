@@ -41,9 +41,10 @@ pub use registry::{
 use registry::{REMEDIATION_GENERIC, lookup_static_rule_id};
 pub use selector::StandardSelector;
 use shared::{
-    has_known_producer, has_known_value, inventory_absent_violation, is_valid_email_format,
+    ValueState, creator_identified, has_known_license, has_known_producer, has_known_value,
+    inventory_absent_violation, is_declared_unknown, is_placeholder, is_valid_email_format,
     known_component_name, known_value, manufacturer_scope_components, package_components,
-    truncate_list,
+    truncate_list, value_state,
 };
 
 /// CRA enforcement phase

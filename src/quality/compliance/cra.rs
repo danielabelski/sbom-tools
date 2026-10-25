@@ -261,10 +261,7 @@ impl ComplianceChecker {
         // not third-party components with licences or suppliers.
         let packages: Vec<_> = package_components(sbom).collect();
         let total = packages.len();
-        let without_license = packages
-            .iter()
-            .filter(|c| c.licenses.declared.is_empty() && c.licenses.concluded.is_none())
-            .count();
+        let without_license = packages.iter().filter(|c| !has_known_license(c)).count();
         if without_license > 0 {
             let pct = (without_license * 100) / total.max(1);
             let severity = if pct > 50 {
@@ -351,7 +348,11 @@ impl ComplianceChecker {
             let mut direct_missing: Vec<String> = Vec::new();
             let mut transitive_missing: Vec<String> = Vec::new();
             for comp in &packages {
-                if comp.has_producer() {
+                // A NOASSERTION or placeholder supplier names nobody: the
+                // raw presence test let it satisfy this mandatory rule while
+                // SBOM-CRA-COMPONENT-SUPPLIER reported the same supplier
+                // missing.
+                if has_known_producer(comp) {
                     continue;
                 }
                 if direct_ids.contains(&comp.canonical_id) {
@@ -1028,7 +1029,7 @@ impl ComplianceChecker {
 
         for comp in hardware_components {
             // 1) Producer (supplier or author) must be set
-            if !comp.has_producer() {
+            if !has_known_producer(comp) {
                 violations.push(Violation {
                     severity: ViolationSeverity::Error,
                     category: ViolationCategory::SupplierInfo,

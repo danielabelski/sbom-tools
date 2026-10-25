@@ -233,8 +233,8 @@ impl ComplianceChecker {
         // Producer / supplier of the AI system (SHOULD). Satisfied when the
         // primary component (or, lacking one, any ML component) declares a
         // supplier/author, or the document carries an organization creator.
-        let producer_known = sbom.primary_component().is_some_and(|c| c.has_producer())
-            || ml_components.iter().any(|c| c.has_producer())
+        let producer_known = sbom.primary_component().is_some_and(has_known_producer)
+            || ml_components.iter().any(|c| has_known_producer(c))
             || sbom
                 .document
                 .creators

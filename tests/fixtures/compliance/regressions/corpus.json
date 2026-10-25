@@ -368,7 +368,6 @@
       "checks": [
         {
           "standard": "cra",
-          "xfail": "0.5",
           "expect": {
             "compliant": false,
             "rules_present": [
@@ -389,7 +388,6 @@
       "checks": [
         {
           "standard": "ntia",
-          "xfail": "0.5",
           "expect": {
             "rules_present": [
               {
@@ -401,7 +399,6 @@
         },
         {
           "standard": "cisa-2026",
-          "xfail": "0.5",
           "expect": {
             "rules_present": [
               {
@@ -413,13 +410,69 @@
         },
         {
           "standard": "pci-dss",
-          "xfail": "0.5",
           "expect": {
             "rules_present": [
               {
                 "rule": "SBOM-PCI-6-3-2-VERSION",
                 "severity": "error"
               }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v4-noassertion-author",
+      "review_id": "V4",
+      "fixture": "v4-noassertion-author.cdx.json",
+      "note": "An author named NOASSERTION names no entity; it satisfied the CISA 2026 and FSCT author elements.",
+      "checks": [
+        {
+          "standard": "cisa-2026",
+          "expect": {
+            "rules_present": [
+              {
+                "rule": "SBOM-CISA2026-AUTHOR",
+                "severity": "error"
+              }
+            ]
+          }
+        },
+        {
+          "standard": "fsct",
+          "expect": {
+            "rules_present": [
+              {
+                "rule": "SBOM-FSCT-AUTHOR",
+                "severity": "error"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v4-declared-unknown-version",
+      "review_id": "V4",
+      "fixture": "v4-declared-unknown-version.cdx.json",
+      "note": "Version NOASSERTION is an explicit unknown: NTIA needs a real version, while CISA 2026's escape hatch accepts the declaration.",
+      "checks": [
+        {
+          "standard": "ntia",
+          "expect": {
+            "rules_present": [
+              {
+                "rule": "SBOM-NTIA-VERSION",
+                "severity": "error"
+              }
+            ]
+          }
+        },
+        {
+          "standard": "cisa-2026",
+          "expect": {
+            "rules_absent": [
+              "SBOM-CISA2026-VERSION"
             ]
           }
         }
