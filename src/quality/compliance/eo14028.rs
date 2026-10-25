@@ -24,6 +24,14 @@ impl ComplianceChecker {
     pub(crate) fn check_eo14028(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
         use crate::model::ExternalRefType;
 
+        // The component checks below have nothing to judge without a
+        // package-scoped component.
+        violations.extend(inventory_absent_violation(
+            sbom,
+            "SBOM-EO14028-INVENTORY",
+            "EO 14028 Sec 4(e): component inventory",
+        ));
+
         // CDXA attestation evidence for the EO 14028 family (fresh and
         // fully resolved at the injectable clock). Strengthens only: the
         // legacy tool-creator path below stays a valid SelfDeclared-level

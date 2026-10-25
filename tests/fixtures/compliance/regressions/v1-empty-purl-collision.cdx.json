@@ -34,13 +34,13 @@
   "components": [
     {
       "type": "library",
-      "bom-ref": "beta",
+      "bom-ref": "comp-beta",
       "name": "beta",
       "purl": ""
     },
     {
       "type": "library",
-      "bom-ref": "alpha",
+      "bom-ref": "comp-alpha",
       "name": "alpha",
       "version": "1.0.0",
       "purl": "",
@@ -53,16 +53,16 @@
     {
       "ref": "app",
       "dependsOn": [
-        "beta",
-        "alpha"
+        "comp-beta",
+        "comp-alpha"
       ]
     },
     {
-      "ref": "alpha",
+      "ref": "comp-beta",
       "dependsOn": []
     },
     {
-      "ref": "beta",
+      "ref": "comp-alpha",
       "dependsOn": []
     }
   ]

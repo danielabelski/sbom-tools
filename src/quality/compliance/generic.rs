@@ -563,6 +563,29 @@ impl ComplianceChecker {
     pub(crate) fn check_components(&self, sbom: &NormalizedSbom, violations: &mut Vec<Violation>) {
         use crate::model::HashAlgorithm;
 
+        // No package-scoped component means the per-component rules below
+        // have nothing to judge; that is a finding, not a pass.
+        let (inventory_requirement, inventory_rule) = match self.level {
+            ComplianceLevel::NtiaMinimum => (
+                "NTIA Minimum Elements: component inventory",
+                "SBOM-NTIA-INVENTORY",
+            ),
+            ComplianceLevel::FdaMedicalDevice => (
+                "FDA: inventory of the device's software components",
+                "SBOM-FDA-INVENTORY",
+            ),
+            level if level.is_cra() => (
+                "CRA Annex I Part II (1): SBOM of the product's components",
+                "SBOM-CRA-INVENTORY",
+            ),
+            level => ("Component inventory", generic_rule_id_for_level(level)),
+        };
+        violations.extend(inventory_absent_violation(
+            sbom,
+            inventory_rule,
+            inventory_requirement,
+        ));
+
         for comp in sbom.components.values() {
             // All levels: component must have a name. Whitespace-only names
             // and placeholder sentinels count as missing, but genuine

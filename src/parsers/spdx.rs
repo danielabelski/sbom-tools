@@ -847,8 +847,8 @@ impl SpdxParser {
         let mut package_ids: HashSet<String> = HashSet::new();
         if let Some(packages) = &spdx.packages {
             for pkg in packages {
-                let comp = self.convert_package(pkg, &license_names);
-                id_map.insert(pkg.spdx_id.clone(), comp.canonical_id.clone());
+                let mut comp = self.convert_package(pkg, &license_names);
+                id_map.insert(pkg.spdx_id.clone(), sbom.claim_canonical_id(&mut comp));
                 package_ids.insert(pkg.spdx_id.clone());
                 sbom.add_component(comp);
             }
@@ -864,9 +864,10 @@ impl SpdxParser {
                 if file.spdx_id.is_empty() && file.file_name.is_empty() {
                     continue;
                 }
-                let comp = self.convert_file(file, &license_names);
+                let mut comp = self.convert_file(file, &license_names);
+                let canonical_id = sbom.claim_canonical_id(&mut comp);
                 if !file.spdx_id.is_empty() {
-                    id_map.insert(file.spdx_id.clone(), comp.canonical_id.clone());
+                    id_map.insert(file.spdx_id.clone(), canonical_id);
                 }
                 sbom.add_component(comp);
             }
@@ -876,9 +877,10 @@ impl SpdxParser {
                 if snippet.spdx_id.is_empty() && snippet.name.is_none() {
                     continue;
                 }
-                let comp = self.convert_snippet(snippet, &license_names);
+                let mut comp = self.convert_snippet(snippet, &license_names);
+                let canonical_id = sbom.claim_canonical_id(&mut comp);
                 if !snippet.spdx_id.is_empty() {
-                    id_map.insert(snippet.spdx_id.clone(), comp.canonical_id.clone());
+                    id_map.insert(snippet.spdx_id.clone(), canonical_id);
                 }
                 sbom.add_component(comp);
             }
@@ -1242,7 +1244,7 @@ impl SpdxParser {
                     || ext_ref.reference_type.eq_ignore_ascii_case("cpe22Type")
                     || ext_ref.reference_locator.starts_with("cpe:")
                 {
-                    comp.identifiers.cpe.push(ext_ref.reference_locator.clone());
+                    comp.add_cpe(ext_ref.reference_locator.clone());
                     continue;
                 }
                 if ext_ref.reference_type.eq_ignore_ascii_case("swid")

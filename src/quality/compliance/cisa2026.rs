@@ -109,6 +109,14 @@ impl ComplianceChecker {
             CompletenessDeclaration, CreatorType, ExternalRefType, HashAlgorithm, HashProvenance,
         };
 
+        // The per-component elements below have nothing to judge without a
+        // package-scoped component.
+        violations.extend(inventory_absent_violation(
+            sbom,
+            "SBOM-CISA2026-INVENTORY",
+            "CISA 2026 Minimum Elements: component inventory",
+        ));
+
         // SBOM Author (Error) — "the name of the entity that creates the
         // SBOM data": the entity operating the generation tool, not the tool
         // itself, so a tool-only creator list fails. Deliberately stricter

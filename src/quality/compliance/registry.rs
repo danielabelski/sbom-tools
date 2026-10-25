@@ -68,6 +68,10 @@ const REMEDIATION_SSDF: &str = "Follow NIST SP 800-218 SSDF practices: include t
 const REMEDIATION_EO14028: &str = "Follow EO 14028 Section 4(e) requirements: use a machine-readable format (CycloneDX 1.4+, SPDX 2.3+, or SPDX 3.0+), auto-generate the SBOM, include unique identifiers, versions, hashes, dependencies, and supplier information.";
 
 /// EU AI Act not-applicable remediation.
+/// Remediation for every `*-INVENTORY` rule: the document must list the
+/// software components it describes.
+const REMEDIATION_INVENTORY: &str = "List the software components the product is made of (CycloneDX: metadata.component and components[]; SPDX: the packages documentDescribes names and the packages they depend on). A document with no components, or with only files, snippets or cryptographic assets, is not a software inventory; validate a CBOM with --standard cnsa2 or pqc instead.";
+
 const REMEDIATION_AIACT_NA: &str = "EU AI Act Annex IV readiness applies only to SBOMs that describe AI/ML systems. Add machine-learning-model or dataset components (CycloneDX 1.5+ AI/ML BOM) to enable the assessment.";
 
 /// BSI/G7 SBOM-for-AI not-applicable remediation.
@@ -340,6 +344,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             default_severity: ViolationSeverity::Warning,
             refs: &[(ANNEX, "Annex I Part II"), (PREN, "PRE-7-RQ-07")],
             remediation: "Add a PURL, CPE, or SWID tag to each component for unique identification. PURLs are preferred (e.g., pkg:npm/lodash@4.17.21).",
+        },
+        "SBOM-CRA-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-CRA-INVENTORY",
+            name: "CraInventory",
+            short_description: "CRA Annex I Part II (1): SBOM inventories the product's software components",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(ANNEX, "Annex I Part II (1)")],
+            remediation: REMEDIATION_INVENTORY,
         },
         "SBOM-CRA-ANNEX-I-SUPPLY-CHAIN" => RuleMeta {
             sarif_id: "SBOM-CRA-ANNEX-I",
@@ -1080,6 +1092,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             refs: &[(K::FdaPremarket, "FDA Premarket")],
             remediation: REMEDIATION_GENERIC_FDA,
         },
+        "SBOM-FDA-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-FDA-INVENTORY",
+            name: "FdaInventory",
+            short_description: "FDA Medical Device: SBOM inventories the device's software components",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::FdaPremarket, "FDA Premarket")],
+            remediation: REMEDIATION_INVENTORY,
+        },
         "SBOM-FDA-GENERAL" => RuleMeta {
             sarif_id: "SBOM-FDA-GENERAL",
             name: "FdaGeneralRequirement",
@@ -1112,6 +1132,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             default_severity: ViolationSeverity::Error,
             refs: &[(K::NtiaMinimum, "NTIA Minimum Elements")],
             remediation: REMEDIATION_GENERIC_NTIA,
+        },
+        "SBOM-NTIA-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-NTIA-INVENTORY",
+            name: "NtiaInventory",
+            short_description: "NTIA Minimum Elements: SBOM inventories at least one software component",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::NtiaMinimum, "NTIA Minimum Elements")],
+            remediation: REMEDIATION_INVENTORY,
         },
         "SBOM-NTIA-GENERAL" => RuleMeta {
             sarif_id: "SBOM-NTIA-GENERAL",
@@ -1156,6 +1184,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             default_severity: ViolationSeverity::Error,
             refs: &[(K::NistSsdf, "PS.2")],
             remediation: REMEDIATION_SSDF,
+        },
+        "SBOM-SSDF-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-SSDF-INVENTORY",
+            name: "SsdfInventory",
+            short_description: "NIST SSDF PS.3.2: provenance data (SBOM) lists the release's components",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::NistSsdf, "PS.3.2")],
+            remediation: REMEDIATION_INVENTORY,
         },
         "SBOM-SSDF-PS3" => RuleMeta {
             sarif_id: "SBOM-SSDF-PS3",
@@ -1245,6 +1281,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             default_severity: ViolationSeverity::Error,
             refs: &[(K::Eo14028, "EO 14028 §4")],
             remediation: REMEDIATION_EO14028,
+        },
+        "SBOM-EO14028-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-EO14028-INVENTORY",
+            name: "Eo14028Inventory",
+            short_description: "EO 14028 Sec 4(e): SBOM lists the software's components",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::Eo14028, "EO 14028 §4")],
+            remediation: REMEDIATION_INVENTORY,
         },
         "SBOM-EO14028-VERSION" => RuleMeta {
             sarif_id: "SBOM-EO14028-VERSION",
@@ -1337,6 +1381,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             default_severity: ViolationSeverity::Error,
             refs: &[(K::BsiTr03183_2, "§5.2.2")],
             remediation: "Name every component. When the component creator assigned no name, the actual filename MUST be used instead.",
+        },
+        "SBOM-BSI-TR-03183-2-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-BSI-TR-03183-2-INVENTORY",
+            name: "BsiTr03183Inventory",
+            short_description: "BSI TR-03183-2 §5.2.2: SBOM lists at least one component",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::BsiTr03183_2, "§5.2.2")],
+            remediation: REMEDIATION_INVENTORY,
         },
         "SBOM-BSI-TR-03183-2-VERSION" => RuleMeta {
             sarif_id: "SBOM-BSI-TR-03183-2-VERSION",
@@ -1782,6 +1834,14 @@ pub fn rule_meta(rule_id: &str) -> Option<RuleMeta> {
             refs: &[(K::CisaMinimum2026, "Component Producer")],
             remediation: "Identify each component's producer (the 2026 rename of the ambiguous Supplier Name): SPDX PackageOriginator / component author is preferred as the entity that created the component, supplier is accepted; if no clear producer exists, explicitly mark the component as of unknown provenance. File-type entries are exempt.",
         },
+        "SBOM-CISA2026-INVENTORY" => RuleMeta {
+            sarif_id: "SBOM-CISA2026-INVENTORY",
+            name: "Cisa2026Inventory",
+            short_description: "CISA 2026: SBOM enumerates at least one software component",
+            default_severity: ViolationSeverity::Error,
+            refs: &[(K::CisaMinimum2026, "Coverage")],
+            remediation: REMEDIATION_INVENTORY,
+        },
         "SBOM-CISA2026-NAME" => RuleMeta {
             sarif_id: "SBOM-CISA2026-NAME",
             name: "Cisa2026ComponentName",
@@ -2209,6 +2269,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-CRA-ANNEX-I-IDENTIFIER",
     "SBOM-CRA-ANNEX-I-TRACEABILITY",
     "SBOM-CRA-ANNEX-I-SUPPLY-CHAIN",
+    "SBOM-CRA-INVENTORY",
     "SBOM-CRA-ANNEX-I-INTEGRITY",
     "SBOM-CRA-ANNEX-I-DEPENDENCY",
     "SBOM-CRA-ANNEX-I-PRIMARY",
@@ -2291,11 +2352,13 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-FDA-IDENTIFIER",
     "SBOM-FDA-HASH",
     "SBOM-FDA-CREATOR",
+    "SBOM-FDA-INVENTORY",
     "SBOM-FDA-NAMESPACE",
     "SBOM-FDA-DEPENDENCY",
     "SBOM-FDA-SECURITY",
     "SBOM-FDA-GENERAL",
     "SBOM-NTIA-AUTHOR",
+    "SBOM-NTIA-INVENTORY",
     "SBOM-NTIA-NAME",
     "SBOM-NTIA-IDENTIFIER",
     "SBOM-NTIA-GENERAL",
@@ -2304,6 +2367,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-SSDF-PS1",
     "SBOM-SSDF-PS2",
     "SBOM-SSDF-PS3",
+    "SBOM-SSDF-INVENTORY",
     "SBOM-SSDF-PO1",
     "SBOM-SSDF-PO3",
     "SBOM-SSDF-PW4",
@@ -2318,6 +2382,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-EO14028-INTEGRITY",
     "SBOM-EO14028-DISCLOSURE",
     "SBOM-EO14028-SUPPLIER",
+    "SBOM-EO14028-INVENTORY",
     "SBOM-EO14028-TIMESTAMP",
     "SBOM-EO14028-NAME",
     "SBOM-BSI-TR-03183-2-4",
@@ -2326,6 +2391,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-BSI-TR-03183-2-5-2",
     "SBOM-BSI-TR-03183-2-5-3",
     "SBOM-BSI-TR-03183-2-VERSION",
+    "SBOM-BSI-TR-03183-2-INVENTORY",
     "SBOM-BSI-TR-03183-2-LICENSE",
     "SBOM-BSI-TR-03183-2-LICENSE-SPDX",
     "SBOM-BSI-TR-03183-2-CREATOR",
@@ -2375,6 +2441,7 @@ const ALL_RULE_IDS: &[&str] = &[
     "SBOM-CISA2026-TOOL-VERSION",
     "SBOM-CISA2026-SBOM-VERSION",
     "SBOM-CISA2026-PRODUCER",
+    "SBOM-CISA2026-INVENTORY",
     "SBOM-CISA2026-NAME",
     "SBOM-CISA2026-VERSION",
     "SBOM-CISA2026-IDENTIFIER",
@@ -2455,6 +2522,7 @@ pub(crate) fn lookup_static_rule_id(rule_id: &str) -> Option<&'static str> {
 /// NTIA Minimum Elements SARIF rule catalogue.
 pub const NTIA_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-NTIA-AUTHOR",
+    "SBOM-NTIA-INVENTORY",
     "SBOM-NTIA-NAME",
     "SBOM-NTIA-VERSION",
     "SBOM-NTIA-SUPPLIER",
@@ -2469,6 +2537,7 @@ pub const NTIA_SARIF_RULE_IDS: &[&str] = &[
 /// elements).
 pub const FDA_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-NTIA-TIMESTAMP",
+    "SBOM-FDA-INVENTORY",
     "SBOM-FDA-CREATOR",
     "SBOM-FDA-NAMESPACE",
     "SBOM-FDA-SUPPLIER",
@@ -2486,6 +2555,7 @@ pub const SSDF_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-SSDF-PS1",
     "SBOM-SSDF-PS2",
     "SBOM-SSDF-PS3",
+    "SBOM-SSDF-INVENTORY",
     "SBOM-SSDF-PO1",
     "SBOM-SSDF-PO3",
     "SBOM-SSDF-PW4",
@@ -2507,6 +2577,7 @@ pub const EO14028_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-EO14028-INTEGRITY",
     "SBOM-EO14028-DISCLOSURE",
     "SBOM-EO14028-SUPPLIER",
+    "SBOM-EO14028-INVENTORY",
     "SBOM-EO14028-GENERAL",
 ];
 
@@ -2528,6 +2599,7 @@ pub const COMPLIANCE_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-CRA-COMPONENT-SUPPLIER",
     "SBOM-CRA-VULN-STATEMENT",
     "SBOM-CRA-ANNEX-I",
+    "SBOM-CRA-INVENTORY",
     "SBOM-CRA-DOC-INTEGRITY",
     "SBOM-CRA-ANNEX-V",
     "SBOM-CRA-GENERAL",
@@ -2544,6 +2616,7 @@ pub const COMPLIANCE_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-BSI-TR-03183-2-5-2",
     "SBOM-BSI-TR-03183-2-5-3",
     "SBOM-BSI-TR-03183-2-VERSION",
+    "SBOM-BSI-TR-03183-2-INVENTORY",
     "SBOM-BSI-TR-03183-2-LICENSE",
     "SBOM-BSI-TR-03183-2-LICENSE-SPDX",
     "SBOM-BSI-TR-03183-2-CREATOR",
@@ -2628,6 +2701,7 @@ pub const CISA2026_SARIF_RULE_IDS: &[&str] = &[
     "SBOM-CISA2026-TOOL-VERSION",
     "SBOM-CISA2026-SBOM-VERSION",
     "SBOM-CISA2026-PRODUCER",
+    "SBOM-CISA2026-INVENTORY",
     "SBOM-CISA2026-NAME",
     "SBOM-CISA2026-VERSION",
     "SBOM-CISA2026-IDENTIFIER",

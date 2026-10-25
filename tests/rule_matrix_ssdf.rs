@@ -64,6 +64,18 @@ fn ssdf_conforming_fixture_is_compliant_with_zero_violations() {
 #[test]
 fn ssdf_rule_matrix_is_exhaustive_with_firing_and_silent_cases() {
     let entries = vec![
+        // No software component at all (no primary, no components): the
+        // per-component rules have nothing to judge, which is a finding.
+        RuleEntry::tested(
+            "SBOM-SSDF-INVENTORY",
+            Sev::Error,
+            broken(|s| {
+                s.primary = None;
+                s.components.clear();
+                s.dependencies.clear();
+            }),
+            base(),
+        ),
         // PS.1 has two sites sharing the rule id: creator-less SBOM (Error)
         // and missing tool creator (Warning).
         RuleEntry::tested(

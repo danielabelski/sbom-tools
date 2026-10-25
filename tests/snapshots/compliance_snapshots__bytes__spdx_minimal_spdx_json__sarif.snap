@@ -24,6 +24,17 @@ source: tests/compliance_snapshots.rs
               "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
             },
             {
+              "id": "SBOM-NTIA-INVENTORY",
+              "name": "NtiaInventory",
+              "shortDescription": {
+                "text": "NTIA Minimum Elements: SBOM inventories at least one software component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+            },
+            {
               "id": "SBOM-NTIA-NAME",
               "name": "NtiaComponentName",
               "shortDescription": {
