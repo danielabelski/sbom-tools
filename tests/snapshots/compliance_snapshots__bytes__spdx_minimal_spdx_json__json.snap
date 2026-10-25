@@ -1,0 +1,186 @@
+---
+source: tests/compliance_snapshots.rs
+---
+[
+  {
+    "is_compliant": false,
+    "level": "NtiaMinimum",
+    "violations": [
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "Component 'lodash' missing supplier/manufacturer",
+        "element": "lodash",
+        "component_id": "pkg:npm/lodash@4.17.21",
+        "requirement": "NTIA: Supplier information",
+        "rule_id": "SBOM-NTIA-SUPPLIER",
+        "sarif_rule_id": "SBOM-NTIA-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "Component 'express' missing supplier/manufacturer",
+        "element": "express",
+        "component_id": "pkg:npm/express@4.18.2",
+        "requirement": "NTIA: Supplier information",
+        "rule_id": "SBOM-NTIA-SUPPLIER",
+        "sarif_rule_id": "SBOM-NTIA-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "NtiaMinimum",
+            "id": "NTIA Minimum Elements",
+            "help_uri": "https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom"
+          }
+        ]
+      }
+    ],
+    "error_count": 2,
+    "warning_count": 0,
+    "info_count": 0,
+    "applicability": {
+      "status": "applicable"
+    }
+  },
+  {
+    "is_compliant": false,
+    "level": "Fsct",
+    "violations": [
+      {
+        "severity": "Error",
+        "category": "DependencyInfo",
+        "message": "[CISA FSCT 3e §2.2.2/§2.3.3] No direct dependencies of the Primary Component are identified, and no completeness declaration covers their absence — identify all static direct dependencies or declare the enumeration's completeness",
+        "element": null,
+        "requirement": "CISA FSCT 3e §2.2.2/§2.3.3: Direct dependencies (Minimum Expected)",
+        "rule_id": "SBOM-FSCT-DIRECT-DEPS",
+        "sarif_rule_id": "SBOM-FSCT-DIRECT-DEPS",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          },
+          {
+            "standard": "CisaFsct",
+            "id": "§2.3.3",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "SupplierInfo",
+        "message": "[CISA FSCT 3e §2.2.2.3] 2/2 component(s) declare no Supplier Name (an explicit 'unknown' is a permitted last resort; silent absence is not): lodash, express",
+        "element": null,
+        "counts": {
+          "affected": 2,
+          "total": 2
+        },
+        "requirement": "CISA FSCT 3e §2.2.2.3: Supplier Name (Minimum Expected)",
+        "rule_id": "SBOM-FSCT-SUPPLIER",
+        "sarif_rule_id": "SBOM-FSCT-SUPPLIER",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2.3",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      },
+      {
+        "severity": "Error",
+        "category": "IntegrityInfo",
+        "message": "[CISA FSCT 3e §2.2.2.5] 1/2 component(s) carry no author-provided cryptographic hash (enrichment-fetched hashes are not author evidence): express",
+        "element": null,
+        "counts": {
+          "affected": 1,
+          "total": 2
+        },
+        "requirement": "CISA FSCT 3e §2.2.2.5: Cryptographic Hash (Minimum Expected)",
+        "rule_id": "SBOM-FSCT-HASH",
+        "sarif_rule_id": "SBOM-FSCT-HASH",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2.5",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "ComponentIdentification",
+        "message": "[CISA FSCT 3e §2.2.2.4] 2/2 component(s) declare fewer than two globally unique identifier kinds (PURL/CPE/SWHID/SWID) — list as many as are available (heuristic threshold; profile policy): lodash, express",
+        "element": null,
+        "counts": {
+          "affected": 2,
+          "total": 2
+        },
+        "requirement": "CISA FSCT 3e §2.2.2.4: Unique Identifier multiplicity (Recommended Practice)",
+        "rule_id": "SBOM-FSCT-IDENTIFIER-MULTI",
+        "sarif_rule_id": "SBOM-FSCT-IDENTIFIER-MULTI",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2.4",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      },
+      {
+        "severity": "Warning",
+        "category": "DependencyInfo",
+        "message": "[CISA FSCT 3e §2.2.2.6.4] No relationship-completeness assertion (Unknown/None/Partial/Known) is recorded (CycloneDX: compositions.aggregate)",
+        "element": null,
+        "requirement": "CISA FSCT 3e §2.2.2.6.4: Relationship completeness (supplemental, optional)",
+        "rule_id": "SBOM-FSCT-COMPLETENESS",
+        "sarif_rule_id": "SBOM-FSCT-COMPLETENESS",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2.6.4",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          },
+          {
+            "standard": "CisaFsct",
+            "id": "§2.3.3",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      },
+      {
+        "severity": "Info",
+        "category": "DependencyInfo",
+        "message": "[CISA FSCT 3e §2.2.2/§2.2.2.6] No dynamic, runtime, or provided dependency relationships are identified (DYNAMIC_LINK / RUNTIME_DEPENDENCY_OF / PROVIDED_DEPENDENCY_OF) — readiness note for the aspirational goal of identifying dynamic and remote dependencies",
+        "element": null,
+        "requirement": "CISA FSCT 3e §2.2.2/§2.2.2.6: Dynamic and remote dependencies (Aspirational Goal)",
+        "rule_id": "SBOM-FSCT-DYNAMIC-DEPS",
+        "sarif_rule_id": "SBOM-FSCT-DYNAMIC-DEPS",
+        "standard_refs": [
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          },
+          {
+            "standard": "CisaFsct",
+            "id": "§2.2.2.6",
+            "help_uri": "https://www.cisa.gov/resources-tools/resources/framing-software-component-transparency-2024"
+          }
+        ]
+      }
+    ],
+    "error_count": 3,
+    "warning_count": 2,
+    "info_count": 1,
+    "applicability": {
+      "status": "applicable"
+    }
+  }
+]

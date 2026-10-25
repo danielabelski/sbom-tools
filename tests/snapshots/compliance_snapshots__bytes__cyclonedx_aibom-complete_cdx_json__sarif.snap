@@ -1,0 +1,859 @@
+---
+source: tests/compliance_snapshots.rs
+---
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "sbom-tools",
+          "version": "[VERSION]",
+          "informationUri": "https://github.com/binarly-io/sbom-tools",
+          "rules": [
+            {
+              "id": "SBOM-CRA-SBOM-FRESHNESS",
+              "name": "CraSbomFreshness",
+              "shortDescription": {
+                "text": "CRA Art. 13(7) / Annex I Part II (1): SBOM freshness — timely regeneration after changes"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-MACHINE-READABLE",
+              "name": "CraMachineReadableFormat",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (1): SBOM must be in a commonly used, machine-readable format (CycloneDX 1.4+, SPDX 2.3+, or SPDX 3.0+)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-17-CONTACT",
+              "name": "CraVulnerabilityContact",
+              "shortDescription": {
+                "text": "CRA Art. 13(17): Single point of contact for vulnerability reporting (Annex I Part II (6), Annex II (2))"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-VULN-METADATA",
+              "name": "CraVulnerabilityMetadata",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (4): Vulnerability severity and remediation metadata completeness"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-5",
+              "name": "CraLicensedComponentTracking",
+              "shortDescription": {
+                "text": "CRA Art. 13(5): Third-party due diligence — license information for all components"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-CVD-POLICY",
+              "name": "CraCoordinatedDisclosure",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (5): Coordinated vulnerability disclosure policy reference"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-8",
+              "name": "CraSupportPeriod",
+              "shortDescription": {
+                "text": "CRA Art. 13(8) / 13(19): Support period and security update end date (Annex II (7))"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-LIFECYCLE",
+              "name": "CraComponentLifecycle",
+              "shortDescription": {
+                "text": "CRA Art. 13(8) / Annex II (7): Component lifecycle and end-of-support status"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-15-PRODUCT",
+              "name": "CraProductIdentification",
+              "shortDescription": {
+                "text": "CRA Art. 13(15): Product identification (Annex II (3))"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-COMPONENT-VERSION",
+              "name": "CraComponentVersion",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (1): Component version identification"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-16",
+              "name": "CraManufacturerIdentification",
+              "shortDescription": {
+                "text": "CRA Art. 13(16): Manufacturer identification and contact information (Annex II (1))"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ART-13-16-EMAIL",
+              "name": "CraManufacturerEmail",
+              "shortDescription": {
+                "text": "CRA Art. 13(16): Valid manufacturer contact email (Annex II (1))"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-COMPONENT-SUPPLIER",
+              "name": "CraComponentSupplier",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (1): Component supplier identification"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-VULN-STATEMENT",
+              "name": "CraKnownVulnerabilities",
+              "shortDescription": {
+                "text": "CRA Annex I Part II (1): Documented vulnerability information — vulnerability data or assertion"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ANNEX-I",
+              "name": "CraTechnicalDocumentation",
+              "shortDescription": {
+                "text": "CRA Annex I: Technical documentation (unique identifiers, dependencies, primary component)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-DOC-INTEGRITY",
+              "name": "CraDocumentIntegrity",
+              "shortDescription": {
+                "text": "CRA Annex I Part I (2)(f): Document integrity — serial number, hash, or digital signature"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-ANNEX-V",
+              "name": "CraDeclarationOfConformity",
+              "shortDescription": {
+                "text": "CRA Annex V: EU Declaration of Conformity reference"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-GENERAL",
+              "name": "CraGeneralRequirement",
+              "shortDescription": {
+                "text": "CRA general SBOM readiness requirement"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-PRE-8-RQ-02",
+              "name": "CraHardwareInventory",
+              "shortDescription": {
+                "text": "CRA prEN 40000-1-3 [PRE-8-RQ-02]: Hardware components must be inventoried with producer, name, identifier, and firmware version"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-CRA-PRE-7-RQ-07-RE",
+              "name": "CraVendorHashCarryThrough",
+              "shortDescription": {
+                "text": "CRA prEN 40000-1-3 [PRE-7-RQ-07-RE]: Upstream vendor-supplied component hashes must be carried through into the SBOM"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+            },
+            {
+              "id": "SBOM-EUCC-PP",
+              "name": "EuccProtectionProfile",
+              "shortDescription": {
+                "text": "EUCC (Reg. (EU) 2024/482): Common Criteria Protection Profile reference — sidecar eucc_protection_profile_id"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg_impl/2024/482/oj/eng"
+            },
+            {
+              "id": "SBOM-EUCC-TOE",
+              "name": "EuccTargetOfEvaluation",
+              "shortDescription": {
+                "text": "EUCC (Reg. (EU) 2024/482): Target of Evaluation reference — sidecar eucc_target_of_evaluation"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg_impl/2024/482/oj/eng"
+            },
+            {
+              "id": "SBOM-EUCC-ITSEF",
+              "name": "EuccItsefIdentifier",
+              "shortDescription": {
+                "text": "EUCC (Reg. (EU) 2024/482): ITSEF (IT Security Evaluation Facility) identifier — sidecar eucc_itsef_identifier"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg_impl/2024/482/oj/eng"
+            },
+            {
+              "id": "SBOM-EUCC-VALIDITY",
+              "name": "EuccCertificateValidity",
+              "shortDescription": {
+                "text": "EUCC (Reg. (EU) 2024/482): certificate valid-until date present, not expired, not near expiry — sidecar eucc_valid_until"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg_impl/2024/482/oj/eng"
+            },
+            {
+              "id": "SBOM-EUCC-CERTREF",
+              "name": "EuccCertificationReference",
+              "shortDescription": {
+                "text": "EUCC (Reg. (EU) 2024/482): Certification/Attestation external reference to an EUCC certificate (recommended)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg_impl/2024/482/oj/eng"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-4",
+              "name": "BsiTr03183FormatEligibility",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 v2.1.0 §4: Newly generated/updated SBOMs must be CycloneDX 1.6+ or SPDX 3.0.1+"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-1",
+              "name": "BsiTr03183SbomCreator",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.1: Creator of the SBOM (email, or URL if no email)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-1-CONTACT",
+              "name": "BsiTr03183SbomCreatorContact",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.1: SBOM creator must carry an email address or URL"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-2",
+              "name": "BsiTr03183Timestamp",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.1: Timestamp of the SBOM data compilation"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-3",
+              "name": "BsiTr03183ComponentName",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Component name (fallback: actual filename)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-VERSION",
+              "name": "BsiTr03183ComponentVersion",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Component version (fallback: RFC 3339 modification date)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-LICENSE",
+              "name": "BsiTr03183DistributionLicence",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Distribution licence(s) per component"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-LICENSE-SPDX",
+              "name": "BsiTr03183SpdxLicenceNaming",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §6.1: Licences must be named by SPDX identifier/expression"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-CREATOR",
+              "name": "BsiTr03183ComponentCreator",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Component creator (email, or URL if no email)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-4",
+              "name": "BsiTr03183ComponentHash",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Hash of the deployable component as SHA-512"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-4-MISSING",
+              "name": "BsiTr03183ComponentHashMissing",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2/§3.2.1: Component has no hash of the deployable form"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-5",
+              "name": "BsiTr03183Dependencies",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Dependencies on other components"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-5-COMPLETENESS",
+              "name": "BsiTr03183DependencyCompleteness",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.2: Completeness of the dependency enumeration must be clearly indicated"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-5-2-4",
+              "name": "BsiTr03183UniqueIdentifier",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §5.2.4: Other unique identifiers (purl/CPE) — additional tier"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-3-1",
+              "name": "BsiTr03183NoVulnerabilityInfo",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 §3.1: An SBOM must not contain vulnerability information"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-BSI-TR-03183-2-GENERAL",
+              "name": "BsiTr03183General",
+              "shortDescription": {
+                "text": "BSI TR-03183-2 general SBOM requirement"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://bsi.bund.de/dok/TR-03183-en"
+            },
+            {
+              "id": "SBOM-AIACT-NA",
+              "name": "AiActNotApplicable",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV readiness not applicable — SBOM has no ML-model or dataset components"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-ANNEX-IV-1",
+              "name": "AiActGeneralDescription",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV §1: general description of the AI system (architecture, intended purpose)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-ANNEX-IV-2D",
+              "name": "AiActTrainingData",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV §2(d): training-data characteristics, provenance, and sensitivity classification"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-ANNEX-IV-2G",
+              "name": "AiActValidationMetrics",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV §2(g): validation/testing metrics (accuracy, robustness)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-ANNEX-IV-2C",
+              "name": "AiActComputationalResources",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV §2(c): computational resources / training-energy disclosure"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-ANNEX-IV-3",
+              "name": "AiActLimitations",
+              "shortDescription": {
+                "text": "EU AI Act Annex IV §3: foreseeable limitations and risks"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-AIACT-UNTYPED-ML",
+              "name": "AiActUntypedMlContent",
+              "shortDescription": {
+                "text": "EU AI Act readiness: ML content detected but not typed machine-learning-model"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+            },
+            {
+              "id": "SBOM-BSIAI-NA",
+              "name": "BsiSbomForAiNotApplicable",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI minimum-elements readiness not applicable — SBOM has no ML-model or dataset components"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-META",
+              "name": "BsiSbomForAiMetadata",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI Metadata cluster: author, data-format name + version, timestamp, generation tool, signature"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-SYS",
+              "name": "BsiSbomForAiSystemLevel",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI System-Level cluster: primary AI system, producer, data flow & usage"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-MODEL",
+              "name": "BsiSbomForAiModels",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI Models cluster: name, version, identifier, weight hash (NIST-approved algorithm), model card, architecture, datasets, limitations, license"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-DATASET",
+              "name": "BsiSbomForAiDatasets",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI Datasets cluster: name, identifier, hash, license, sensitivity classification, provenance & intended use"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-INFRA",
+              "name": "BsiSbomForAiInfrastructure",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI Infrastructure cluster: runtime / framework dependency links"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-SEC",
+              "name": "BsiSbomForAiSecurity",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI Security cluster: AI-specific security controls, exploitability references"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            },
+            {
+              "id": "SBOM-BSIAI-UNTYPED-ML",
+              "name": "BsiSbomForAiUntypedMlContent",
+              "shortDescription": {
+                "text": "BSI/G7 SBOM-for-AI readiness: ML content detected but not typed machine-learning-model"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "SBOM-BSIAI-META",
+          "level": "note",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Metadata readiness: SBOM carries no document signature (integrity attestation recommended) (Requirement: BSI/G7 SBOM-for-AI — Metadata / Signature) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Metadata / Signature"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-SYS",
+          "level": "warning",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] System-Level readiness: no producer/supplier of the AI system is declared (Requirement: BSI/G7 SBOM-for-AI — System-Level / Producer) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:System-Level / Producer"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-SYS",
+          "level": "note",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] System-Level readiness: AI-system data-flow / usage / input-output description is not declared (no SBOM field carries it today) (Requirement: BSI/G7 SBOM-for-AI — System-Level / Data flow & usage) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:System-Level / Data flow & usage"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-MODEL",
+          "level": "error",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Model identifier readiness: 1 component(s) carry no unique identifier (PURL/CPE/SWHID/SWID): sentiment-classifier (Requirement: BSI/G7 SBOM-for-AI — Models / Model identifier) [Element: sentiment-classifier]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Models / Model identifier"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-MODEL",
+          "level": "warning",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Model license readiness: 1 component(s) declare no license: sentiment-classifier (Requirement: BSI/G7 SBOM-for-AI — Models / Model license) [Element: sentiment-classifier]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Models / Model license"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-DATASET",
+          "level": "error",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Dataset identifier readiness: 1 component(s) carry no unique identifier (PURL/CPE/SWHID/SWID): product-reviews-1M (Requirement: BSI/G7 SBOM-for-AI — Datasets / Dataset identifier) [Element: product-reviews-1M]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Datasets / Dataset identifier"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-DATASET",
+          "level": "warning",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Dataset hash value readiness: 1 component(s) carry no hash value: product-reviews-1M (Requirement: BSI/G7 SBOM-for-AI — Datasets / Dataset hash value) [Element: product-reviews-1M]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Datasets / Dataset hash value"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-DATASET",
+          "level": "warning",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Dataset license readiness: 1 component(s) declare no license: product-reviews-1M (Requirement: BSI/G7 SBOM-for-AI — Datasets / Dataset license) [Element: product-reviews-1M]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Datasets / Dataset license"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-DATASET",
+          "level": "warning",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Provenance & intended use readiness: 1 component(s) declare no provenance / intended-use: product-reviews-1M (Requirement: BSI/G7 SBOM-for-AI — Datasets / Provenance & intended use) [Element: product-reviews-1M]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Datasets / Provenance & intended use"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ],
+            "affected": 1,
+            "total": 1
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-INFRA",
+          "level": "note",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Infrastructure readiness: no ML component links to its runtime / framework dependencies (no dependency edge or BOM/HBOM reference) (Requirement: BSI/G7 SBOM-for-AI — Infrastructure / Runtime & framework) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Infrastructure / Runtime & framework"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-SEC",
+          "level": "note",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Security readiness: no AI-specific security controls are declared (no SBOM field carries them today) (Requirement: BSI/G7 SBOM-for-AI — Security / AI security controls) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Security / AI security controls"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        },
+        {
+          "ruleId": "SBOM-BSIAI-SEC",
+          "level": "note",
+          "message": {
+            "text": "BSI/G7 SBOM-for-AI Minimum Elements Readiness: [BSI-AI] Security readiness: no exploitability reference is declared (no SBOM field carries it today) (Requirement: BSI/G7 SBOM-for-AI — Security / Exploitability reference) [Element: unknown]"
+          },
+          "locations": [],
+          "properties": {
+            "standardIds": [
+              "BSI-G7-SBOM-for-AI:Security / Exploitability reference"
+            ],
+            "standardHelpUris": [
+              "https://www.cisa.gov/resources-tools/resources/software-bill-materials-ai-minimum-elements"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "applicable": true,
+        "standards": [
+          {
+            "profile": "EU AI Act Annex IV Readiness",
+            "applicable": true,
+            "overallScore": 100.0,
+            "compliant": true
+          },
+          {
+            "profile": "BSI/G7 SBOM-for-AI Minimum Elements Readiness",
+            "applicable": true,
+            "overallScore": 12.0,
+            "compliant": false
+          }
+        ]
+      }
+    }
+  ]
+}

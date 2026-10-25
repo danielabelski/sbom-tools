@@ -1,0 +1,243 @@
+{
+  "description": "False-pass regression corpus from the v0.3.0 compliance review. Each check names the verdict a standard must reach. A check with \"xfail\" is a known defect, still reproduced: the runner asserts its expectation does NOT hold yet, and the work package named in \"xfail\" must remove the marker when it fixes it. Paths are relative to this directory. Evaluated at as_of 2026-10-12T00:00:00Z.",
+  "entries": [
+    {
+      "id": "v1-empty-purl-collision",
+      "review_id": "V1",
+      "fixture": "v1-empty-purl-collision.cdx.json",
+      "note": "Two components with \"purl\": \"\" share canonical ID \"\"; the incomplete one is overwritten and NTIA passes.",
+      "checks": [
+        {
+          "standard": "ntia",
+          "xfail": "0.3",
+          "expect": {
+            "compliant": false,
+            "errors": 2,
+            "rules_present": [
+              { "rule": "SBOM-NTIA-VERSION", "severity": "error" },
+              { "rule": "SBOM-NTIA-SUPPLIER", "severity": "error" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v3-empty-inventory",
+      "review_id": "V3",
+      "fixture": "v3-empty-inventory.cdx.json",
+      "note": "No components at all. PCI DSS and FSCT already fail; the others passed.",
+      "checks": [
+        { "standard": "ntia", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "fda", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "cra", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "cisa-2026", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "eo14028", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "ssdf", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "bsi", "xfail": "0.3", "expect": { "compliant": false } },
+        {
+          "standard": "pci-dss",
+          "expect": {
+            "compliant": false,
+            "rules_present": [{ "rule": "SBOM-PCI-6-3-2-INVENTORY", "severity": "error" }]
+          }
+        },
+        { "standard": "fsct", "expect": { "compliant": false } }
+      ]
+    },
+    {
+      "id": "v3-file-only",
+      "review_id": "V3",
+      "fixture": "v3-file-only.spdx.json",
+      "note": "An SPDX document whose only element is a file: no package inventory.",
+      "checks": [
+        { "standard": "ntia", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "fda", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "cra", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "cisa-2026", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "ssdf", "xfail": "0.3", "expect": { "compliant": false } },
+        { "standard": "pci-dss", "xfail": "0.3", "expect": { "compliant": false } }
+      ]
+    },
+    {
+      "id": "v2-spdx-source-purpose",
+      "review_id": "V2",
+      "fixture": "v2-spdx-source-purpose.spdx.json",
+      "note": "zlib with primaryPackagePurpose SOURCE was mapped to File and escaped every package check.",
+      "checks": [
+        {
+          "standard": "ntia",
+          "xfail": "0.4",
+          "expect": {
+            "compliant": false,
+            "errors": 3,
+            "rules_present": [
+              { "rule": "SBOM-NTIA-VERSION", "severity": "error" },
+              { "rule": "SBOM-NTIA-IDENTIFIER", "severity": "error" },
+              { "rule": "SBOM-NTIA-SUPPLIER", "severity": "error" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v2-spdx-archive-purpose",
+      "review_id": "V2",
+      "fixture": "v2-spdx-archive-purpose.spdx.json",
+      "checks": [
+        { "standard": "ntia", "xfail": "0.4", "expect": { "compliant": false, "errors": 3 } }
+      ]
+    },
+    {
+      "id": "v2-spdx-file-purpose",
+      "review_id": "V2",
+      "fixture": "v2-spdx-file-purpose.spdx.json",
+      "note": "A package whose purpose is FILE is still a package; SPDX File elements are the exempt ones.",
+      "checks": [
+        { "standard": "ntia", "xfail": "0.4", "expect": { "compliant": false, "errors": 3 } }
+      ]
+    },
+    {
+      "id": "v5-cbom-crypto-assets-as-packages",
+      "review_id": "V5",
+      "fixture": "../../cyclonedx/cbom-1.6.cdx.json",
+      "note": "16 crypto assets plus an application and one library; only the two package-scoped components may draw package findings.",
+      "checks": [
+        {
+          "standard": "eo14028",
+          "xfail": "0.4",
+          "expect": { "rule_counts": [{ "rule": "SBOM-EO14028-SUPPLIER", "total": 2 }] }
+        },
+        {
+          "standard": "ssdf",
+          "xfail": "0.4",
+          "expect": { "rule_counts": [{ "rule": "SBOM-SSDF-PS2", "total": 2 }] }
+        },
+        {
+          "standard": "bsi",
+          "xfail": "0.4",
+          "expect": { "rule_counts": [{ "rule": "SBOM-BSI-TR-03183-2-VERSION", "total": 2 }] }
+        },
+        {
+          "standard": "cra",
+          "xfail": "0.4",
+          "expect": {
+            "message_excludes": [
+              { "rule": "SBOM-CRA-ANNEX-I-SUPPLY-CHAIN", "text": ["TLS 1.2", "SSH 2.0"] }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v4-noassertion-supplier",
+      "review_id": "V4",
+      "fixture": "v4-noassertion-supplier.cdx.json",
+      "note": "A direct dependency whose supplier is NOASSERTION satisfied the mandatory CRA supply-chain rule.",
+      "checks": [
+        {
+          "standard": "cra",
+          "xfail": "0.5",
+          "expect": {
+            "compliant": false,
+            "rules_present": [{ "rule": "SBOM-CRA-ANNEX-I-SUPPLY-CHAIN", "severity": "error" }]
+          }
+        }
+      ]
+    },
+    {
+      "id": "v4-placeholder-version",
+      "review_id": "V4",
+      "fixture": "v4-placeholder-version.cdx.json",
+      "note": "Versions \"N/A\" and \"TBD\" counted as versions.",
+      "checks": [
+        {
+          "standard": "ntia",
+          "xfail": "0.5",
+          "expect": { "rules_present": [{ "rule": "SBOM-NTIA-VERSION", "severity": "error" }] }
+        },
+        {
+          "standard": "cisa-2026",
+          "xfail": "0.5",
+          "expect": { "rules_present": [{ "rule": "SBOM-CISA2026-VERSION", "severity": "error" }] }
+        },
+        {
+          "standard": "pci-dss",
+          "xfail": "0.5",
+          "expect": { "rules_present": [{ "rule": "SBOM-PCI-6-3-2-VERSION", "severity": "error" }] }
+        }
+      ]
+    },
+    {
+      "id": "v6-unknown-algorithms",
+      "review_id": "V6",
+      "fixture": "v6-unknown-algorithms.cdx.json",
+      "note": "FFDH and two JCA signature names the classifier cannot name passed both crypto profiles with warnings only.",
+      "checks": [
+        { "standard": "cnsa2", "xfail": "0.6", "expect": { "compliant": false } },
+        {
+          "standard": "pqc",
+          "xfail": "0.6",
+          "expect": { "compliant": false, "rules_present": [{ "rule": "SBOM-PQC-ALG-UNKNOWN" }] }
+        }
+      ]
+    },
+    {
+      "id": "v6-tls13-unnamed-suite",
+      "review_id": "V6",
+      "fixture": "v6-tls13-unnamed-suite.cdx.json",
+      "note": "TLS 1.3 declaring a cipher suite the classifier cannot name added nothing to either profile.",
+      "checks": [
+        {
+          "standard": "cnsa2",
+          "xfail": "0.6",
+          "expect": {
+            "compliant": false,
+            "rules_present": [{ "rule": "SBOM-CNSA2-PROTO-UNKNOWN", "severity": "error" }]
+          }
+        },
+        {
+          "standard": "pqc",
+          "xfail": "0.6",
+          "expect": { "rules_present": [{ "rule": "SBOM-PQC-PROTO-UNKNOWN" }] }
+        }
+      ]
+    },
+    {
+      "id": "v7-tls13-classical-groups",
+      "review_id": "V7",
+      "fixture": "v7-tls13-classical-groups.cdx.json",
+      "note": "A TLS 1.3 suite with an acceptable AEAD and hash, but only classical key-exchange groups (x25519, secp256r1).",
+      "checks": [
+        { "standard": "cnsa2", "xfail": "2.3", "expect": { "compliant": false } },
+        { "standard": "pqc", "xfail": "2.3", "expect": { "compliant": false } }
+      ]
+    },
+    {
+      "id": "v13-cra-sidecar-support-end",
+      "review_id": "V13",
+      "fixture": "../../cra/cra-compliant.cdx.json",
+      "sidecar": "../../cra/cra-compliant.cra.json",
+      "note": "The sidecar declares supportEndDate 2031-01-15, yet ART-13-8 asked for a support end date.",
+      "checks": [
+        { "standard": "cra", "xfail": "0.7", "expect": { "rules_absent": ["SBOM-CRA-ART-13-8"] } }
+      ]
+    },
+    {
+      "id": "v12-spec-version-1-10",
+      "review_id": "V12",
+      "fixture": "v12-spec-version-1-10.cdx.json",
+      "note": "String-prefix version gates read \"1.10\" as 1.1; numeric gates read it as newer than 1.7.",
+      "checks": [
+        { "standard": "eo14028", "xfail": "0.7", "expect": { "rules_absent": ["SBOM-EO14028-FORMAT"] } },
+        {
+          "standard": "cra",
+          "xfail": "0.7",
+          "expect": {
+            "rules_absent": ["SBOM-CRA-MACHINE-READABLE"],
+            "message_excludes": [{ "rule": "SBOM-CRA-GENERAL", "text": ["is outdated"] }]
+          }
+        }
+      ]
+    }
+  ]
+}

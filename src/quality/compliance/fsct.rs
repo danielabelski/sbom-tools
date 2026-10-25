@@ -374,14 +374,20 @@ impl FsctEvidence {
 
         let mut direct_edge_count = 0usize;
         let mut unresolved_direct = Vec::new();
-        let mut direct_ids: HashSet<&CanonicalId> = HashSet::new();
+        // Direct dependencies in edge order. The set only deduplicates; every
+        // walk goes through the ordered Vec so findings come out in the same
+        // order on every run (a HashSet walk reordered them between runs).
+        let mut direct_ids: Vec<&CanonicalId> = Vec::new();
+        let mut direct_seen: HashSet<&CanonicalId> = HashSet::new();
         let mut primary_in_edge_set = false;
         if let Some(primary) = primary_id {
             for edge in &sbom.edges {
                 if &edge.from == primary {
                     direct_edge_count += 1;
                     if sbom.components.contains_key(&edge.to) {
-                        direct_ids.insert(&edge.to);
+                        if direct_seen.insert(&edge.to) {
+                            direct_ids.push(&edge.to);
+                        }
                     } else {
                         unresolved_direct.push(edge.to.value().to_string());
                     }
@@ -391,7 +397,11 @@ impl FsctEvidence {
                 }
             }
         }
-        let has_depth2_edges = sbom.edges.iter().any(|e| direct_ids.contains(&e.from));
+        // Every component that has at least one outgoing edge, computed once:
+        // checking each direct dependency against all edges was quadratic on
+        // wide, flat graphs.
+        let edge_sources: HashSet<&CanonicalId> = sbom.edges.iter().map(|e| &e.from).collect();
+        let has_depth2_edges = direct_ids.iter().any(|id| edge_sources.contains(id));
         let all_direct_declared_leaf = !direct_ids.is_empty()
             && direct_ids.iter().all(|id| {
                 sbom.components
@@ -433,7 +443,7 @@ impl FsctEvidence {
             if !comp.component_type.is_package_scoped() {
                 continue;
             }
-            let has_children = sbom.edges.iter().any(|e| &&e.from == id);
+            let has_children = edge_sources.contains(id);
             let has_bom_ref = comp
                 .external_refs
                 .iter()

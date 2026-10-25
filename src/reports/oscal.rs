@@ -19,9 +19,47 @@ const ASSESSMENT_PLAN_URN: &str = "urn:sbom-tools:assessment-plan:validation";
 const PROP_NS: &str = "https://sbom.tools/ns/oscal";
 
 /// Generate an OSCAL 1.1.2 assessment-results JSON document.
+///
+/// Stamps the current time and random UUIDs, so two runs never produce the
+/// same bytes. Prefer [`generate_assessment_results_at`], which is
+/// reproducible.
 pub fn generate_assessment_results(results: &[ComplianceResult]) -> Result<String> {
     build_assessment_results(results, Utc::now(), &mut Uuid::new_v4)
 }
+
+/// Generate an OSCAL 1.1.2 assessment-results JSON document that is
+/// reproducible for a given input.
+///
+/// The `collected` and `last-modified` timestamps are `as_of` (the `--as-of`
+/// evaluation instant), or the current time when none is given. Every UUID is
+/// a UUIDv5 derived from `sbom_digest`, that timestamp, the checked standards
+/// and the UUID's position in the document. The same SBOM evaluated against
+/// the same standards at the same instant therefore always yields the same
+/// bytes, while a different SBOM, instant or standard set never reuses a UUID.
+pub fn generate_assessment_results_at(
+    results: &[ComplianceResult],
+    sbom_digest: &str,
+    as_of: Option<DateTime<Utc>>,
+) -> Result<String> {
+    let timestamp = as_of.unwrap_or_else(Utc::now);
+    let namespace = Uuid::new_v5(&Uuid::NAMESPACE_URL, UUID_NAMESPACE_NAME.as_bytes());
+    let standards: Vec<String> = results.iter().map(standard_id).collect();
+    let seed = format!(
+        "{sbom_digest}|{}|{}",
+        timestamp.to_rfc3339_opts(SecondsFormat::Secs, true),
+        standards.join(",")
+    );
+    let mut position = 0u64;
+    build_assessment_results(results, timestamp, &mut || {
+        position += 1;
+        Uuid::new_v5(&namespace, format!("{seed}|{position}").as_bytes())
+    })
+}
+
+/// Name (in the RFC 4122 URL namespace) of the UUIDv5 namespace that
+/// [`generate_assessment_results_at`] derives document UUIDs from.
+const UUID_NAMESPACE_NAME: &str =
+    "https://github.com/sbom-tool/sbom-tools/oscal/assessment-results";
 
 fn build_assessment_results(
     results: &[ComplianceResult],
@@ -481,5 +519,43 @@ mod tests {
         for finding in findings.iter().skip(1) {
             assert_eq!(finding["target"]["status"]["state"], "not-satisfied");
         }
+    }
+
+    #[test]
+    fn pinned_instant_makes_the_document_byte_identical() {
+        use super::generate_assessment_results_at;
+        let as_of = Utc
+            .with_ymd_and_hms(2026, 10, 12, 0, 0, 0)
+            .single()
+            .expect("valid timestamp");
+        let results = [result(vec![violation("missing timestamp")])];
+        let first = generate_assessment_results_at(&results, "abc123", Some(as_of))
+            .expect("OSCAL serialization");
+        let second = generate_assessment_results_at(&results, "abc123", Some(as_of))
+            .expect("OSCAL serialization");
+        assert_eq!(
+            first, second,
+            "same SBOM and instant must give the same bytes"
+        );
+
+        let document: serde_json::Value = serde_json::from_str(&first).expect("valid JSON");
+        assert_eq!(
+            document["assessment-results"]["metadata"]["last-modified"], "2026-10-12T00:00:00Z",
+            "the timestamp must come from as_of, not the wall clock"
+        );
+        let uuid = document["assessment-results"]["uuid"]
+            .as_str()
+            .expect("document uuid");
+        let parsed = Uuid::parse_str(uuid).expect("valid UUID");
+        // OSCAL's uuid datatype accepts only RFC 4122 version 4 or 5.
+        assert_eq!(parsed.get_version_num(), 5, "document UUID version");
+
+        let other_sbom = generate_assessment_results_at(&results, "def456", Some(as_of))
+            .expect("OSCAL serialization");
+        let other: serde_json::Value = serde_json::from_str(&other_sbom).expect("valid JSON");
+        assert_ne!(
+            document["assessment-results"]["uuid"], other["assessment-results"]["uuid"],
+            "a different SBOM must not reuse UUIDs"
+        );
     }
 }
