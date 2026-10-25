@@ -49,7 +49,7 @@ pub(crate) const REMEDIATION_GENERIC: &str = "Review the requirement and update 
 /// regulation it belongs to, never default to the CRA (see the CNSA precedent).
 const REMEDIATION_GENERIC_NTIA: &str = "Review the requirement and update the SBOM accordingly. Consult the NTIA \"Minimum Elements for an SBOM\" (July 2021) for detailed guidance.";
 
-const REMEDIATION_GENERIC_FDA: &str = "Review the requirement and update the SBOM accordingly. Consult the FDA premarket cybersecurity guidance (2023) / FD&C \u{a7}524B for detailed guidance.";
+const REMEDIATION_GENERIC_FDA: &str = "Review the requirement and update the SBOM accordingly. Consult the FDA premarket cybersecurity guidance (edition of 2026-02-03) / FD&C \u{a7}524B for detailed guidance.";
 
 const REMEDIATION_GENERIC_AIACT: &str = "Review the requirement and update the SBOM accordingly. Consult the EU AI Act (Regulation (EU) 2024/1689) Annex IV technical-documentation requirements for detailed guidance.";
 

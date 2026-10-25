@@ -1308,8 +1308,9 @@ fn render_help_bar(frame: &mut Frame, area: Rect, ctx: &RenderContext) {
 ///
 /// Deliberately excludes `message` — messages embed mutable details (spec
 /// versions, counts, element names), so keying on them double-counted any
-/// reworded violation as 1 new + 1 resolved. Also excludes `rule_id`, which is
-/// `#[serde(skip)]` and resets to the default on deserialization.
+/// reworded violation as 1 new + 1 resolved. It also leaves out `rule_id`:
+/// the key predates rule IDs being serialized (they now round-trip), and a
+/// shared (standard, rule, component) identity key is planned to replace it.
 fn violation_key(v: &Violation) -> (ViolationSeverity, ViolationCategory, &str, Option<&str>) {
     (
         v.severity,

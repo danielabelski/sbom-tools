@@ -8,32 +8,6 @@ source: tests/compliance_snapshots.rs
     "violations": [
       {
         "severity": "Info",
-        "category": "SecurityInfo",
-        "message": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
-        "element": null,
-        "requirement": "CRA Art. 13(8) / 13(19): Support period disclosure",
-        "rule_id": "SBOM-CRA-ART-13-8",
-        "sarif_rule_id": "SBOM-CRA-ART-13-8",
-        "standard_refs": [
-          {
-            "standard": "CraArticle",
-            "id": "Art. 13(8)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          },
-          {
-            "standard": "CraArticle",
-            "id": "Art. 13(19)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          },
-          {
-            "standard": "CraAnnex",
-            "id": "Annex II (7)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          }
-        ]
-      },
-      {
-        "severity": "Info",
         "category": "FormatSpecific",
         "message": "Component 'lib-a' may be missing bom-ref",
         "element": "lib-a",
@@ -92,7 +66,7 @@ source: tests/compliance_snapshots.rs
     ],
     "error_count": 0,
     "warning_count": 1,
-    "info_count": 4,
+    "info_count": 3,
     "conformity_summary": {
       "product_class": "important-class-1",
       "route": "module-a",
@@ -124,32 +98,6 @@ source: tests/compliance_snapshots.rs
     "violations": [
       {
         "severity": "Info",
-        "category": "SecurityInfo",
-        "message": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
-        "element": null,
-        "requirement": "CRA Art. 13(8) / 13(19): Support period disclosure",
-        "rule_id": "SBOM-CRA-ART-13-8",
-        "sarif_rule_id": "SBOM-CRA-ART-13-8",
-        "standard_refs": [
-          {
-            "standard": "CraArticle",
-            "id": "Art. 13(8)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          },
-          {
-            "standard": "CraArticle",
-            "id": "Art. 13(19)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          },
-          {
-            "standard": "CraAnnex",
-            "id": "Annex II (7)",
-            "help_uri": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-          }
-        ]
-      },
-      {
-        "severity": "Info",
         "category": "FormatSpecific",
         "message": "Component 'lib-a' may be missing bom-ref",
         "element": "lib-a",
@@ -208,7 +156,7 @@ source: tests/compliance_snapshots.rs
     ],
     "error_count": 0,
     "warning_count": 1,
-    "info_count": 4,
+    "info_count": 3,
     "conformity_summary": {
       "product_class": "important-class-1",
       "route": "module-a",

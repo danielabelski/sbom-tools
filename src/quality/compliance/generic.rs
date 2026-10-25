@@ -214,8 +214,14 @@ impl ComplianceChecker {
             // CRA: Check for support end date (informational). The support
             // period is determined under Art. 13(8); its end date must be
             // disclosed at purchase (Art. 13(19)) and accompany the product
-            // (Annex II (7)).
-            if sbom.document.support_end_date.is_none() {
+            // (Annex II (7)). The CRA sidecar's `supportEndDate` declares it
+            // too: ignoring it asked for a date the run already had.
+            let support_end_declared = sbom.document.support_end_date.is_some()
+                || self
+                    .sidecar
+                    .as_ref()
+                    .is_some_and(|s| s.support_end_date.is_some());
+            if !support_end_declared {
                 violations.push(Violation {
                     severity: ViolationSeverity::Info,
                     category: ViolationCategory::SecurityInfo,
@@ -231,25 +237,21 @@ impl ComplianceChecker {
 
             // CRA Annex I Part II (1): Machine-readable SBOM format validation
             // The CRA requires SBOMs in a "commonly used and machine-readable"
-            // format (Annex I Part II (1)). CycloneDX 1.4+ and SPDX 2.3+ are
-            // widely accepted as machine-readable.
-            let format_ok = match sbom.document.format {
-                SbomFormat::CycloneDx => {
-                    let v = &sbom.document.spec_version;
-                    !(v.starts_with("1.0")
-                        || v.starts_with("1.1")
-                        || v.starts_with("1.2")
-                        || v.starts_with("1.3"))
-                }
-                SbomFormat::Spdx => {
-                    // An empty spec_version means the document declared no
-                    // version (parsers never fabricate one): skip rather
-                    // than false-fail, matching the CycloneDX arm where an
-                    // empty version also passes.
-                    let v = &sbom.document.spec_version;
-                    v.is_empty() || v.starts_with("2.3") || v.starts_with("3.")
-                }
+            // format (Annex I Part II (1)) but names no versions, so the floor
+            // is tool policy: CycloneDX 1.4+, and SPDX 2.3+, the first SPDX
+            // release whose package release / valid-until dates can carry the
+            // support period. (EO 14028 accepts SPDX 2.2, which the NTIA
+            // report it defers to names.) Versions compare numerically; an
+            // absent or unparseable version skips the gate instead of
+            // false-failing.
+            let minimum = match sbom.document.format {
+                SbomFormat::CycloneDx => crate::model::SpecVersion::new(1, 4, 0),
+                SbomFormat::Spdx => crate::model::SpecVersion::new(2, 3, 0),
             };
+            let format_ok = sbom
+                .document
+                .spec_version_parsed()
+                .is_none_or(|v| v >= minimum);
             if !format_ok {
                 violations.push(Violation {
                     severity: ViolationSeverity::Warning,
@@ -1242,20 +1244,43 @@ impl ComplianceChecker {
     ) {
         // CycloneDX specific checks
         let version = &sbom.document.spec_version;
+        use crate::model::SpecVersion;
 
-        // Warn about older versions
-        if version.starts_with("1.3") || version.starts_with("1.2") || version.starts_with("1.1") {
-            violations.push(Violation {
-                severity: ViolationSeverity::Info,
-                category: ViolationCategory::FormatSpecific,
-                message: format!("CycloneDX {version} is outdated, consider upgrading to 1.7+"),
-                element: None,
-                requirement: "Current CycloneDX version".to_string(),
-                rule_id: generic_rule_id_for_level(self.level),
-                component_id: None,
-                counts: None,
-                standard_refs: Vec::new(),
-            });
+        // Versions compare numerically: string prefixes read "1.10" as
+        // "1.1" and never flagged 1.0.
+        match sbom.document.spec_version_parsed() {
+            Some(v) if v < SpecVersion::new(1, 4, 0) => {
+                violations.push(Violation {
+                    severity: ViolationSeverity::Info,
+                    category: ViolationCategory::FormatSpecific,
+                    message: format!("CycloneDX {version} is outdated, consider upgrading to 1.7+"),
+                    element: None,
+                    requirement: "Current CycloneDX version".to_string(),
+                    rule_id: generic_rule_id_for_level(self.level),
+                    component_id: None,
+                    counts: None,
+                    standard_refs: Vec::new(),
+                });
+            }
+            // A version newer than any this tool reads (CycloneDX 2.0 is
+            // expected): say so once, rather than let version gates guess.
+            Some(v) if v.major > 1 || v.minor > 7 => {
+                violations.push(Violation {
+                    severity: ViolationSeverity::Warning,
+                    category: ViolationCategory::FormatSpecific,
+                    message: format!(
+                        "CycloneDX {version} is newer than the latest version sbom-tools \
+                         reads (1.7); elements it introduces are not evaluated"
+                    ),
+                    element: None,
+                    requirement: "Supported CycloneDX version".to_string(),
+                    rule_id: generic_rule_id_for_level(self.level),
+                    component_id: None,
+                    counts: None,
+                    standard_refs: Vec::new(),
+                });
+            }
+            _ => {}
         }
 
         // Check for bom-ref on components (important for CycloneDX).
@@ -1285,9 +1310,30 @@ impl ComplianceChecker {
     ) {
         // SPDX specific checks
         let version = &sbom.document.spec_version;
+        let parsed = sbom.document.spec_version_parsed();
+
+        // A version newer than any this tool reads: say so once.
+        if let Some(v) = parsed
+            && (v.major > 3 || (v.major == 3 && v.minor > 0))
+        {
+            violations.push(Violation {
+                severity: ViolationSeverity::Warning,
+                category: ViolationCategory::FormatSpecific,
+                message: format!(
+                    "SPDX {version} is newer than the latest version sbom-tools reads (3.0); \
+                     elements it introduces are not evaluated"
+                ),
+                element: None,
+                requirement: "Supported SPDX version".to_string(),
+                rule_id: generic_rule_id_for_level(self.level),
+                component_id: None,
+                counts: None,
+                standard_refs: Vec::new(),
+            });
+        }
 
         // Check version
-        if !version.starts_with("2.") && !version.starts_with("3.") {
+        if !parsed.is_some_and(|v| v.major == 2 || v.major == 3) {
             violations.push(Violation {
                 severity: ViolationSeverity::Warning,
                 category: ViolationCategory::FormatSpecific,
@@ -1303,7 +1349,7 @@ impl ComplianceChecker {
 
         // SPDX requires element identifiers
         // SPDX 2.x uses SPDXRef- prefix; SPDX 3.0 uses URN-style IDs (e.g., urn:spdx:...)
-        let is_spdx3 = version.starts_with("3.");
+        let is_spdx3 = parsed.is_some_and(|v| v.major == 3);
         // All components: every SPDX element needs a valid identifier.
         for comp in sbom.components.values() {
             let valid_id = if is_spdx3 {

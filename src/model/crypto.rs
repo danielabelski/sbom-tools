@@ -371,28 +371,48 @@ impl CertificateProperties {
         refs
     }
 
-    /// Returns `true` if the certificate has expired.
+    /// Returns `true` if the certificate has expired by now (wall clock).
+    /// Use [`Self::is_expired_at`] to judge at a pinned instant.
     #[must_use]
     pub fn is_expired(&self) -> bool {
-        self.not_valid_after
-            .is_some_and(|expiry| expiry < Utc::now())
+        self.is_expired_at(Utc::now())
     }
 
-    /// Returns `true` if the certificate expires within the given number of days.
+    /// Returns `true` if the certificate had expired at `now`.
+    #[must_use]
+    pub fn is_expired_at(&self, now: chrono::DateTime<Utc>) -> bool {
+        self.not_valid_after.is_some_and(|expiry| expiry < now)
+    }
+
+    /// Returns `true` if the certificate expires within the given number of
+    /// days from now (wall clock).
     #[must_use]
     pub fn is_expiring_soon(&self, days: u32) -> bool {
+        self.is_expiring_soon_at(days, Utc::now())
+    }
+
+    /// Returns `true` if, at `now`, the certificate is still valid but
+    /// expires within `days`.
+    #[must_use]
+    pub fn is_expiring_soon_at(&self, days: u32, now: chrono::DateTime<Utc>) -> bool {
         self.not_valid_after.is_some_and(|expiry| {
-            let threshold = Utc::now() + chrono::Duration::days(i64::from(days));
-            expiry <= threshold && expiry > Utc::now()
+            let threshold = now + chrono::Duration::days(i64::from(days));
+            expiry <= threshold && expiry > now
         })
     }
 
-    /// Returns remaining days until expiry, or `None` if no expiry date is set.
-    /// Returns negative values for already-expired certificates.
+    /// Returns remaining days until expiry from now (wall clock), or `None`
+    /// if no expiry date is set. Negative for already-expired certificates.
     #[must_use]
     pub fn validity_days(&self) -> Option<i64> {
-        self.not_valid_after
-            .map(|expiry| (expiry - Utc::now()).num_days())
+        self.validity_days_at(Utc::now())
+    }
+
+    /// Returns remaining days until expiry at `now`, or `None` if no expiry
+    /// date is set. Negative for certificates already expired at `now`.
+    #[must_use]
+    pub fn validity_days_at(&self, now: chrono::DateTime<Utc>) -> Option<i64> {
+        self.not_valid_after.map(|expiry| (expiry - now).num_days())
     }
 
     #[must_use]

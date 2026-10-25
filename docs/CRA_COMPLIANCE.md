@@ -91,9 +91,11 @@ Pre-deadline findings are emitted as `Info`; post-deadline they become
 The 2026-09-11 deadline is compared against the *evaluation instant* — the
 wall clock by default, or `--as-of <RFC 3339>` for reproducible CI runs.
 
-Art. 14(7) is the exception: the ENISA single reporting platform has no
-published endpoint yet, so the missing-`enisaReportingPlatformId` finding
-stays `Info` on both sides of the deadline.
+Art. 14(7) is the exception: ENISA's Single Reporting Platform went live on
+2026-09-11, but as a web form with no machine-readable endpoint, so the
+missing-`enisaReportingPlatformId` finding stays `Info` on both sides of the
+deadline for now. Its severity is being revisited now that the platform
+exists.
 
 ### CRA Annexes
 
