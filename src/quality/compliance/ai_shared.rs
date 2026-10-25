@@ -72,6 +72,7 @@ pub(crate) fn ai_bom_scope(sbom: &NormalizedSbom) -> AiBomScope<'_> {
         dataset_components: Vec::new(),
         untyped_ml_components: Vec::new(),
     };
+    // All components: the loop selects ML models and datasets by type.
     for c in sbom.components.values() {
         let is_ml = c.component_type == ComponentType::MachineLearningModel || c.ml_model.is_some();
         if is_ml {

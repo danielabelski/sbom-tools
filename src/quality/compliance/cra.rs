@@ -256,10 +256,13 @@ impl ComplianceChecker {
         // licences as an SBOM element; licence data is evidence that the
         // manufacturer exercised due diligence on integrated third-party
         // components.
-        let total = sbom.components.len();
-        let without_license = sbom
-            .components
-            .values()
+        // Licence evidence and the supply-chain cohorts below concern
+        // package-scoped components: crypto assets, files and services are
+        // not third-party components with licences or suppliers.
+        let packages: Vec<_> = package_components(sbom).collect();
+        let total = packages.len();
+        let without_license = packages
+            .iter()
             .filter(|c| c.licenses.declared.is_empty() && c.licenses.concluded.is_none())
             .count();
         if without_license > 0 {
@@ -333,10 +336,21 @@ impl ComplianceChecker {
         // - transitive missing supplier: Warning under CraPhase2 if >30%,
         //   Info otherwise.
         if !sbom.edges.is_empty() {
-            let direct_ids = sbom.direct_dependency_ids();
+            // Direct dependencies that are packages: a TLS protocol or an
+            // algorithm the product uses is not a supplier-bearing
+            // dependency.
+            let direct_ids: std::collections::HashSet<_> = sbom
+                .direct_dependency_ids()
+                .into_iter()
+                .filter(|id| {
+                    sbom.components
+                        .get(id)
+                        .is_some_and(|c| c.component_type.is_package_scoped())
+                })
+                .collect();
             let mut direct_missing: Vec<String> = Vec::new();
             let mut transitive_missing: Vec<String> = Vec::new();
-            for comp in sbom.components.values() {
+            for comp in &packages {
                 if comp.has_producer() {
                     continue;
                 }
@@ -574,9 +588,7 @@ impl ComplianceChecker {
 
         // B6: Art. 13(8) / Annex II (7) — Component lifecycle / EOL detection
         // If EOL enrichment data is present, warn about EOL components
-        let eol_count = sbom
-            .components
-            .values()
+        let eol_count = package_components(sbom)
             .filter(|c| {
                 c.eol
                     .as_ref()
@@ -605,9 +617,7 @@ impl ComplianceChecker {
             });
         }
 
-        let approaching_eol_count = sbom
-            .components
-            .values()
+        let approaching_eol_count = package_components(sbom)
             .filter(|c| {
                 c.eol
                     .as_ref()
@@ -1005,6 +1015,7 @@ impl ComplianceChecker {
             )
         };
 
+        // All components: the filter selects hardware kinds by type.
         let hardware_components: Vec<_> = sbom
             .components
             .values()

@@ -10,74 +10,68 @@ as_of: 2026-10-12T00:00:00Z
 [NtiaMinimum] NON-COMPLIANT · E2 W0 I0
   E SBOM-NTIA-SUPPLIER  pkg:cargo/cnsa2-crypto-suite@1.0.0
   E SBOM-NTIA-SUPPLIER  pkg:cargo/national-security-app@1.0.0
-[CraPhase1] compliant · E0 W10 I6
+[CraPhase1] compliant · E0 W9 I7
   I SBOM-CRA-ANNEX-I-INTEGRITY  pkg:cargo/cnsa2-crypto-suite@1.0.0
   I SBOM-CRA-ANNEX-I-INTEGRITY  pkg:cargo/national-security-app@1.0.0
-  I SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (11/14)
+  I SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (1/2)
+  I SBOM-CRA-ART-13-5  - (1/2)
   I SBOM-CRA-ART-13-8  -
   I SBOM-CRA-ART-14  -
   I SBOM-CRA-VULN-STATEMENT  -
-  W SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (3/3)
+  W SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (1/1)
   W SBOM-CRA-ART-13-16  -
   W SBOM-CRA-ART-13-17-CONTACT  -
-  W SBOM-CRA-ART-13-5  - (13/14)
   W SBOM-CRA-ART-14  - ×3
   W SBOM-CRA-COMPONENT-SUPPLIER  pkg:cargo/cnsa2-crypto-suite@1.0.0
   W SBOM-CRA-COMPONENT-SUPPLIER  pkg:cargo/national-security-app@1.0.0
   W SBOM-CRA-SBOM-FRESHNESS  -
-[CraPhase2] NON-COMPLIANT · E1 W12 I7
-  E SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (3/3)
+[CraPhase2] NON-COMPLIANT · E1 W11 I8
+  E SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (1/1)
   I SBOM-CRA-ANNEX-I-INTEGRITY  pkg:cargo/cnsa2-crypto-suite@1.0.0
   I SBOM-CRA-ANNEX-I-INTEGRITY  pkg:cargo/national-security-app@1.0.0
   I SBOM-CRA-ANNEX-V  -
+  I SBOM-CRA-ART-13-5  - (1/2)
   I SBOM-CRA-ART-13-8  -
   I SBOM-CRA-ART-14  -
   I SBOM-CRA-LIFECYCLE  -
   I SBOM-CRA-VULN-STATEMENT  -
-  W SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (11/14)
+  W SBOM-CRA-ANNEX-I-SUPPLY-CHAIN  - (1/2)
   W SBOM-CRA-ART-13-16  -
   W SBOM-CRA-ART-13-17-CONTACT  -
   W SBOM-CRA-ART-13-2  -
-  W SBOM-CRA-ART-13-5  - (13/14)
   W SBOM-CRA-ART-14  - ×3
   W SBOM-CRA-COMPONENT-SUPPLIER  pkg:cargo/cnsa2-crypto-suite@1.0.0
   W SBOM-CRA-COMPONENT-SUPPLIER  pkg:cargo/national-security-app@1.0.0
   W SBOM-CRA-CVD-POLICY  -
   W SBOM-CRA-SBOM-FRESHNESS  -
-[FdaMedicalDevice] NON-COMPLIANT · E4 W4 I0
+[FdaMedicalDevice] NON-COMPLIANT · E4 W3 I0
   E SBOM-FDA-HASH  pkg:cargo/cnsa2-crypto-suite@1.0.0
   E SBOM-FDA-HASH  pkg:cargo/national-security-app@1.0.0
   E SBOM-FDA-SUPPLIER  pkg:cargo/cnsa2-crypto-suite@1.0.0
   E SBOM-FDA-SUPPLIER  pkg:cargo/national-security-app@1.0.0
-  W SBOM-FDA-DEPENDENCY  - (1/14)
   W SBOM-FDA-SUPPLIER  -
   W SBOM-FDA-SUPPORT  - ×2
-[NistSsdf] NON-COMPLIANT · E1 W3 I2
-  E SBOM-SSDF-PS2  - (14/14)
+[NistSsdf] NON-COMPLIANT · E1 W2 I2
+  E SBOM-SSDF-PS2  - (2/2)
   I SBOM-SSDF-PO3  -
   I SBOM-SSDF-PW6  -
   W SBOM-SSDF-PO1  -
-  W SBOM-SSDF-PS3  - (14/14)
-  W SBOM-SSDF-RV1  - (12/14)
-[Eo14028] NON-COMPLIANT · E3 W2 I0
-  E SBOM-EO14028-IDENTIFIER  - (12/14)
-  E SBOM-EO14028-SUPPLIER  - (14/14)
-  E SBOM-EO14028-VERSION  - (12/14)
+  W SBOM-SSDF-PS3  - (2/2)
+[Eo14028] NON-COMPLIANT · E1 W2 I0
+  E SBOM-EO14028-SUPPLIER  - (2/2)
   W SBOM-EO14028-DISCLOSURE  -
-  W SBOM-EO14028-INTEGRITY  - (14/14)
+  W SBOM-EO14028-INTEGRITY  - (2/2)
 [Cnsa2] compliant · E0 W0 I0
 [NistPqc] compliant · E0 W0 I4
   I SBOM-PQC-009  crypto/algorithm/lms
   I SBOM-PQC-009  crypto/algorithm/ml-dsa-87
   I SBOM-PQC-009  crypto/algorithm/ml-kem-1024
   I SBOM-PQC-009  crypto/algorithm/xmss
-[BsiTr03183_2] NON-COMPLIANT · E3 W3 I0
+[BsiTr03183_2] NON-COMPLIANT · E2 W2 I0
   E SBOM-BSI-TR-03183-2-5-1  -
-  E SBOM-BSI-TR-03183-2-LICENSE  - (13/14)
-  E SBOM-BSI-TR-03183-2-VERSION  - (12/14)
-  W SBOM-BSI-TR-03183-2-5-2-4  - (12/14)
-  W SBOM-BSI-TR-03183-2-5-4-MISSING  - (14/14)
-  W SBOM-BSI-TR-03183-2-CREATOR  - (14/14)
+  E SBOM-BSI-TR-03183-2-LICENSE  - (1/2)
+  W SBOM-BSI-TR-03183-2-5-4-MISSING  - (2/2)
+  W SBOM-BSI-TR-03183-2-CREATOR  - (2/2)
 [CraOssSteward] NON-COMPLIANT · E1 W3 I2
   E SBOM-CRA-ART-24  -
   I SBOM-CRA-ANNEX-I-INTEGRITY  pkg:cargo/cnsa2-crypto-suite@1.0.0
@@ -106,7 +100,7 @@ as_of: 2026-10-12T00:00:00Z
   W SBOM-CISA2026-SIGNATURE  -
 [PciDss632] compliant · E0 W0 I1
   I SBOM-PCI-6-3-2-VULN-EVIDENCE  -
-[Fsct] NON-COMPLIANT · E5 W4 I4
+[Fsct] NON-COMPLIANT · E5 W3 I4
   E SBOM-FSCT-AUTHOR  -
   E SBOM-FSCT-COPYRIGHT-PRIMARY  pkg:cargo/national-security-app@1.0.0
   E SBOM-FSCT-HASH  - (2/2)
@@ -119,7 +113,6 @@ as_of: 2026-10-12T00:00:00Z
   W SBOM-FSCT-COPYRIGHT-COVERAGE  - (0/2)
   W SBOM-FSCT-HASH-PRIMARY-SHA2  pkg:cargo/national-security-app@1.0.0
   W SBOM-FSCT-IDENTIFIER-MULTI  - (2/2)
-  W SBOM-FSCT-RELATIONSHIP-ALL  - (1/14)
 [Comprehensive] NON-COMPLIANT · E2 W3 I0
   E SBOM-NTIA-SUPPLIER  pkg:cargo/cnsa2-crypto-suite@1.0.0
   E SBOM-NTIA-SUPPLIER  pkg:cargo/national-security-app@1.0.0

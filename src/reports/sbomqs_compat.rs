@@ -102,10 +102,10 @@
 //! are not components). The normalized model folds SPDX files/snippets and
 //! CycloneDX services into `components`, so this module filters them back
 //! out: SPDX components typed `File` and CycloneDX components typed
-//! `Other("service")` are excluded from every per-component denominator and
-//! from `num_components`. (Side effect: an SPDX *package* whose
-//! `primaryPackagePurpose` is SOURCE/ARCHIVE/FILE is also excluded, because
-//! the typed model collapses those purposes into `ComponentType::File`.)
+//! `Service` are excluded from every per-component denominator and from
+//! `num_components`. An SPDX *package* whose `primaryPackagePurpose` is
+//! SOURCE/ARCHIVE/FILE is typed `Other(..)`, not `File`, so it is counted
+//! like any other package, as sbomqs does.
 
 use crate::model::{Component, ComponentType, CreatorType, NormalizedSbom, SbomFormat};
 use serde::{Deserialize, Serialize};
@@ -550,7 +550,8 @@ fn compat_components(sbom: &NormalizedSbom) -> Vec<&Component> {
         .filter(|c| match sbom.document.format {
             SbomFormat::Spdx => c.component_type != ComponentType::File,
             SbomFormat::CycloneDx => {
-                !matches!(&c.component_type, ComponentType::Other(s) if s == "service")
+                !matches!(&c.component_type, ComponentType::Service)
+                    && !matches!(&c.component_type, ComponentType::Other(s) if s == "service")
             }
         })
         .collect()

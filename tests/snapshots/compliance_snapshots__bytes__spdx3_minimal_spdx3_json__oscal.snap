@@ -17,7 +17,7 @@ source: tests/compliance_snapshots.rs
         "description": "Validation results for BSI TR-03183-2, derived only from the supplied SBOM.",
         "findings": [
           {
-            "description": "Overall verdict for BSI TR-03183-2: 4 error(s), 5 warning(s), 0 informational finding(s).",
+            "description": "Overall verdict for BSI TR-03183-2: 3 error(s), 5 warning(s), 0 informational finding(s).",
             "target": {
               "status": {
                 "state": "not-satisfied"
@@ -46,27 +46,10 @@ source: tests/compliance_snapshots.rs
             "uuid": "794b734b-3c7c-5603-95e7-55cb6664ee18"
           },
           {
-            "description": "[BSI TR-03183-2 §5.2.2] 1/4 component(s) missing a version (if no version is assigned this MUST be the RFC 3339 modification date of the file): README.md",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) missing distribution licence(s): lib-utils",
             "related-observations": [
               {
                 "observation-uuid": "2b5684b2-8d5f-5909-834e-34c1b42ece42"
-              }
-            ],
-            "target": {
-              "status": {
-                "state": "not-satisfied"
-              },
-              "target-id": "sbom-bsi-tr-03183-2-version",
-              "type": "objective-id"
-            },
-            "title": "SBOM-BSI-TR-03183-2-VERSION",
-            "uuid": "4e60def1-e440-5b52-ac11-b73885fef23f"
-          },
-          {
-            "description": "[BSI TR-03183-2 §5.2.2] 2/4 component(s) missing distribution licence(s): lib-utils, README.md",
-            "related-observations": [
-              {
-                "observation-uuid": "818336d0-9c28-500e-942c-93e6a5ec171c"
               }
             ],
             "target": {
@@ -77,13 +60,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-LICENSE",
-            "uuid": "be1cda83-320c-5360-b31d-f62a68b7fff6"
+            "uuid": "4e60def1-e440-5b52-ac11-b73885fef23f"
           },
           {
-            "description": "[BSI TR-03183-2 §5.2.2] 3/4 component(s) missing a component creator (supplier/author with email, or URL if no email)",
+            "description": "[BSI TR-03183-2 §5.2.2] 2/3 component(s) missing a component creator (supplier/author with email, or URL if no email)",
             "related-observations": [
               {
-                "observation-uuid": "4eb01774-6d16-59d8-9d4a-ed799462ef1c"
+                "observation-uuid": "818336d0-9c28-500e-942c-93e6a5ec171c"
               }
             ],
             "target": {
@@ -94,13 +77,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-CREATOR",
-            "uuid": "57cf988a-82df-52f3-8a28-7a4990802ae2"
+            "uuid": "be1cda83-320c-5360-b31d-f62a68b7fff6"
           },
           {
-            "description": "[BSI TR-03183-2 §5.2.2] 2/4 component(s) carry hashes but none is SHA-512 (the TR names the algorithm; SHA-256 or others alone do not satisfy the required field): my-app, README.md",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) carry hashes but none is SHA-512 (the TR names the algorithm; SHA-256 or others alone do not satisfy the required field): my-app",
             "related-observations": [
               {
-                "observation-uuid": "37a1cebe-020b-5447-bac9-dbe7c6cc120c"
+                "observation-uuid": "4eb01774-6d16-59d8-9d4a-ed799462ef1c"
               }
             ],
             "target": {
@@ -111,13 +94,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-5-4",
-            "uuid": "51c2f0b5-7c7e-5bda-aa17-da58e700599f"
+            "uuid": "57cf988a-82df-52f3-8a28-7a4990802ae2"
           },
           {
-            "description": "[BSI TR-03183-2 §5.2.2] 1/4 component(s) have no hash of the deployable form; required as SHA-512 unless the information is unavailable due to the way the component is assembled (§3.2.1)",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) have no hash of the deployable form; required as SHA-512 unless the information is unavailable due to the way the component is assembled (§3.2.1)",
             "related-observations": [
               {
-                "observation-uuid": "d224e91a-ac44-50ba-9a82-f48a76068830"
+                "observation-uuid": "37a1cebe-020b-5447-bac9-dbe7c6cc120c"
               }
             ],
             "target": {
@@ -128,13 +111,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-5-4-MISSING",
-            "uuid": "498bf7fc-1346-51b6-b8c2-9b6ff7d4fb16"
+            "uuid": "51c2f0b5-7c7e-5bda-aa17-da58e700599f"
           },
           {
             "description": "[BSI TR-03183-2 §5.2.2] Completeness of the dependency enumeration is not clearly indicated (CycloneDX compositions.aggregate / SPDX 3 relationship completeness)",
             "related-observations": [
               {
-                "observation-uuid": "8224fbec-c4d5-5474-97f0-198116cf1628"
+                "observation-uuid": "d224e91a-ac44-50ba-9a82-f48a76068830"
               }
             ],
             "target": {
@@ -145,13 +128,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-5-5-COMPLETENESS",
-            "uuid": "bf1a6543-d556-5db9-af7a-f0bccf0d2794"
+            "uuid": "498bf7fc-1346-51b6-b8c2-9b6ff7d4fb16"
           },
           {
-            "description": "[BSI TR-03183-2 §5.2.4] 2/4 component(s) missing a unique identifier (purl/CPE/SWHID/SWID) — an additional-tier field that MUST be provided when one exists: lib-utils, README.md",
+            "description": "[BSI TR-03183-2 §5.2.4] 1/3 component(s) missing a unique identifier (purl/CPE/SWHID/SWID) — an additional-tier field that MUST be provided when one exists: lib-utils",
             "related-observations": [
               {
-                "observation-uuid": "5fc6e24d-95c9-589c-a835-6d21062228ff"
+                "observation-uuid": "8224fbec-c4d5-5474-97f0-198116cf1628"
               }
             ],
             "target": {
@@ -162,13 +145,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-5-2-4",
-            "uuid": "4837e793-312c-5221-833d-e645a1468d55"
+            "uuid": "bf1a6543-d556-5db9-af7a-f0bccf0d2794"
           },
           {
             "description": "[BSI TR-03183-2 §3.1] SBOM carries vulnerability information on 1/4 component(s); a document containing both SBOM and vulnerability information does not conform — publish advisories separately (e.g. CSAF). Ignore if the data was attached by enrichment rather than present in the source document.",
             "related-observations": [
               {
-                "observation-uuid": "349168f3-d6d4-507f-a77b-b1ac070f5ebe"
+                "observation-uuid": "5fc6e24d-95c9-589c-a835-6d21062228ff"
               }
             ],
             "target": {
@@ -179,7 +162,7 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-BSI-TR-03183-2-3-1",
-            "uuid": "1d7f7229-77ac-5ec8-988e-013f5a1311ab"
+            "uuid": "4837e793-312c-5221-833d-e645a1468d55"
           }
         ],
         "observations": [
@@ -219,41 +202,7 @@ source: tests/compliance_snapshots.rs
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.2] 1/4 component(s) missing a version (if no version is assigned this MUST be the RFC 3339 modification date of the file): README.md",
-            "methods": [
-              "EXAMINE"
-            ],
-            "props": [
-              {
-                "name": "severity",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "error"
-              },
-              {
-                "name": "standard-reference",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "BSI TR-03183-2 §5.2.2: Component version"
-              },
-              {
-                "name": "rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-BSI-TR-03183-2-VERSION"
-              },
-              {
-                "name": "sarif-rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-BSI-TR-03183-2-VERSION"
-              }
-            ],
-            "title": "SBOM-BSI-TR-03183-2-VERSION",
-            "types": [
-              "finding"
-            ],
-            "uuid": "2b5684b2-8d5f-5909-834e-34c1b42ece42"
-          },
-          {
-            "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.2] 2/4 component(s) missing distribution licence(s): lib-utils, README.md",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) missing distribution licence(s): lib-utils",
             "methods": [
               "EXAMINE"
             ],
@@ -283,11 +232,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "818336d0-9c28-500e-942c-93e6a5ec171c"
+            "uuid": "2b5684b2-8d5f-5909-834e-34c1b42ece42"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.2] 3/4 component(s) missing a component creator (supplier/author with email, or URL if no email)",
+            "description": "[BSI TR-03183-2 §5.2.2] 2/3 component(s) missing a component creator (supplier/author with email, or URL if no email)",
             "methods": [
               "EXAMINE"
             ],
@@ -317,11 +266,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "4eb01774-6d16-59d8-9d4a-ed799462ef1c"
+            "uuid": "818336d0-9c28-500e-942c-93e6a5ec171c"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.2] 2/4 component(s) carry hashes but none is SHA-512 (the TR names the algorithm; SHA-256 or others alone do not satisfy the required field): my-app, README.md",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) carry hashes but none is SHA-512 (the TR names the algorithm; SHA-256 or others alone do not satisfy the required field): my-app",
             "methods": [
               "EXAMINE"
             ],
@@ -351,11 +300,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "37a1cebe-020b-5447-bac9-dbe7c6cc120c"
+            "uuid": "4eb01774-6d16-59d8-9d4a-ed799462ef1c"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.2] 1/4 component(s) have no hash of the deployable form; required as SHA-512 unless the information is unavailable due to the way the component is assembled (§3.2.1)",
+            "description": "[BSI TR-03183-2 §5.2.2] 1/3 component(s) have no hash of the deployable form; required as SHA-512 unless the information is unavailable due to the way the component is assembled (§3.2.1)",
             "methods": [
               "EXAMINE"
             ],
@@ -385,7 +334,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "d224e91a-ac44-50ba-9a82-f48a76068830"
+            "uuid": "37a1cebe-020b-5447-bac9-dbe7c6cc120c"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -419,11 +368,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "8224fbec-c4d5-5474-97f0-198116cf1628"
+            "uuid": "d224e91a-ac44-50ba-9a82-f48a76068830"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "[BSI TR-03183-2 §5.2.4] 2/4 component(s) missing a unique identifier (purl/CPE/SWHID/SWID) — an additional-tier field that MUST be provided when one exists: lib-utils, README.md",
+            "description": "[BSI TR-03183-2 §5.2.4] 1/3 component(s) missing a unique identifier (purl/CPE/SWHID/SWID) — an additional-tier field that MUST be provided when one exists: lib-utils",
             "methods": [
               "EXAMINE"
             ],
@@ -453,7 +402,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "5fc6e24d-95c9-589c-a835-6d21062228ff"
+            "uuid": "8224fbec-c4d5-5474-97f0-198116cf1628"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -487,7 +436,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "349168f3-d6d4-507f-a77b-b1ac070f5ebe"
+            "uuid": "5fc6e24d-95c9-589c-a835-6d21062228ff"
           }
         ],
         "props": [
@@ -514,7 +463,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "error-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "4"
+            "value": "3"
           },
           {
             "name": "warning-count",
@@ -529,7 +478,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "score",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "10"
+            "value": "11"
           }
         ],
         "reviewed-controls": {
@@ -542,13 +491,13 @@ source: tests/compliance_snapshots.rs
         },
         "start": "2026-10-12T00:00:00Z",
         "title": "sbom-tools validation assessment — BSI TR-03183-2",
-        "uuid": "87fea353-f4fd-502d-99d5-097872a1ebe7"
+        "uuid": "349168f3-d6d4-507f-a77b-b1ac070f5ebe"
       },
       {
         "description": "Validation results for EO 14028 Section 4, derived only from the supplied SBOM.",
         "findings": [
           {
-            "description": "Overall verdict for EO 14028 Section 4: 3 error(s), 2 warning(s), 0 informational finding(s).",
+            "description": "Overall verdict for EO 14028 Section 4: 2 error(s), 2 warning(s), 0 informational finding(s).",
             "target": {
               "status": {
                 "state": "not-satisfied"
@@ -557,13 +506,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "EO 14028 Section 4 compliance roll-up",
-            "uuid": "1da5519d-9ccf-563e-ae05-bd98aa640510"
+            "uuid": "1d7f7229-77ac-5ec8-988e-013f5a1311ab"
           },
           {
-            "description": "2/4 components missing unique identifier (PURL/CPE/SWHID/SWID)",
+            "description": "1/3 components missing unique identifier (PURL/CPE/SWHID/SWID)",
             "related-observations": [
               {
-                "observation-uuid": "a16949c7-c691-51e8-ab48-7b1bccd99149"
+                "observation-uuid": "87fea353-f4fd-502d-99d5-097872a1ebe7"
               }
             ],
             "target": {
@@ -574,30 +523,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-EO14028-IDENTIFIER",
-            "uuid": "56c70861-17b2-5301-b8e5-ad89ac160808"
+            "uuid": "1da5519d-9ccf-563e-ae05-bd98aa640510"
           },
           {
-            "description": "1/4 components missing version information",
+            "description": "1/3 components missing cryptographic hashes",
             "related-observations": [
               {
-                "observation-uuid": "a6a175b9-c897-58da-8e29-0c1bc7363dbd"
-              }
-            ],
-            "target": {
-              "status": {
-                "state": "not-satisfied"
-              },
-              "target-id": "sbom-eo14028-version",
-              "type": "objective-id"
-            },
-            "title": "SBOM-EO14028-VERSION",
-            "uuid": "253bd136-1b9e-504a-8836-eaba518e17f5"
-          },
-          {
-            "description": "1/4 components missing cryptographic hashes",
-            "related-observations": [
-              {
-                "observation-uuid": "13401877-b4be-5e8d-a108-81400912068c"
+                "observation-uuid": "a16949c7-c691-51e8-ab48-7b1bccd99149"
               }
             ],
             "target": {
@@ -608,13 +540,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-EO14028-INTEGRITY",
-            "uuid": "ec80d0e4-563e-596e-bbf6-028253b0345f"
+            "uuid": "56c70861-17b2-5301-b8e5-ad89ac160808"
           },
           {
             "description": "No security contact or vulnerability disclosure reference found",
             "related-observations": [
               {
-                "observation-uuid": "df00508c-eb50-564d-902d-b1e60a231146"
+                "observation-uuid": "a6a175b9-c897-58da-8e29-0c1bc7363dbd"
               }
             ],
             "target": {
@@ -625,13 +557,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-EO14028-DISCLOSURE",
-            "uuid": "6d599bcb-6c54-5e98-af74-f74ff9e61d85"
+            "uuid": "253bd136-1b9e-504a-8836-eaba518e17f5"
           },
           {
-            "description": "3/4 components (75%) missing supplier information",
+            "description": "2/3 components (66%) missing supplier information",
             "related-observations": [
               {
-                "observation-uuid": "cae4cbba-6350-5aeb-b8bf-ea4d1da6c03a"
+                "observation-uuid": "13401877-b4be-5e8d-a108-81400912068c"
               }
             ],
             "target": {
@@ -642,13 +574,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-EO14028-SUPPLIER",
-            "uuid": "57145d6a-2c4a-5904-8369-e6997458eba3"
+            "uuid": "ec80d0e4-563e-596e-bbf6-028253b0345f"
           }
         ],
         "observations": [
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "2/4 components missing unique identifier (PURL/CPE/SWHID/SWID)",
+            "description": "1/3 components missing unique identifier (PURL/CPE/SWHID/SWID)",
             "methods": [
               "EXAMINE"
             ],
@@ -678,45 +610,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "a16949c7-c691-51e8-ab48-7b1bccd99149"
+            "uuid": "87fea353-f4fd-502d-99d5-097872a1ebe7"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "1/4 components missing version information",
-            "methods": [
-              "EXAMINE"
-            ],
-            "props": [
-              {
-                "name": "severity",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "error"
-              },
-              {
-                "name": "standard-reference",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "EO 14028 Sec 4(e): Component version"
-              },
-              {
-                "name": "rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-EO14028-VERSION"
-              },
-              {
-                "name": "sarif-rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-EO14028-VERSION"
-              }
-            ],
-            "title": "SBOM-EO14028-VERSION",
-            "types": [
-              "finding"
-            ],
-            "uuid": "a6a175b9-c897-58da-8e29-0c1bc7363dbd"
-          },
-          {
-            "collected": "2026-10-12T00:00:00Z",
-            "description": "1/4 components missing cryptographic hashes",
+            "description": "1/3 components missing cryptographic hashes",
             "methods": [
               "EXAMINE"
             ],
@@ -746,7 +644,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "13401877-b4be-5e8d-a108-81400912068c"
+            "uuid": "a16949c7-c691-51e8-ab48-7b1bccd99149"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -780,11 +678,11 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "df00508c-eb50-564d-902d-b1e60a231146"
+            "uuid": "a6a175b9-c897-58da-8e29-0c1bc7363dbd"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
-            "description": "3/4 components (75%) missing supplier information",
+            "description": "2/3 components (66%) missing supplier information",
             "methods": [
               "EXAMINE"
             ],
@@ -814,7 +712,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "cae4cbba-6350-5aeb-b8bf-ea4d1da6c03a"
+            "uuid": "13401877-b4be-5e8d-a108-81400912068c"
           }
         ],
         "props": [
@@ -841,7 +739,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "error-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "3"
+            "value": "2"
           },
           {
             "name": "warning-count",
@@ -856,7 +754,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "score",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "16"
+            "value": "20"
           }
         ],
         "reviewed-controls": {
@@ -869,9 +767,9 @@ source: tests/compliance_snapshots.rs
         },
         "start": "2026-10-12T00:00:00Z",
         "title": "sbom-tools validation assessment — EO 14028 Section 4",
-        "uuid": "a55168f5-0b55-5fe1-8bac-4e12c7bc520d"
+        "uuid": "df00508c-eb50-564d-902d-b1e60a231146"
       }
     ],
-    "uuid": "a00b0f5b-fedd-5c83-a004-d26baacf8245"
+    "uuid": "6d599bcb-6c54-5e98-af74-f74ff9e61d85"
   }
 }

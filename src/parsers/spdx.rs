@@ -1151,7 +1151,13 @@ impl SpdxParser {
                         "OPERATING_SYSTEM" => ComponentType::OperatingSystem,
                         "DEVICE" => ComponentType::Device,
                         "FIRMWARE" => ComponentType::Firmware,
-                        "SOURCE" | "ARCHIVE" | "FILE" => ComponentType::File,
+                        // Packages whose purpose is SOURCE, ARCHIVE or FILE
+                        // are still packages (a source tarball needs a
+                        // version and supplier); only SPDX File and Snippet
+                        // elements are `File`.
+                        "SOURCE" => ComponentType::Other("source".to_string()),
+                        "ARCHIVE" => ComponentType::Other("archive".to_string()),
+                        "FILE" => ComponentType::Other("file".to_string()),
                         "DATA" => ComponentType::Data,
                         other => ComponentType::Other(other.to_lowercase()),
                     }

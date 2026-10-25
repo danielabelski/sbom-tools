@@ -42,7 +42,8 @@ use registry::{REMEDIATION_GENERIC, lookup_static_rule_id};
 pub use selector::StandardSelector;
 use shared::{
     has_known_producer, has_known_value, inventory_absent_violation, is_valid_email_format,
-    known_component_name, known_value, manufacturer_scope_components, truncate_list,
+    known_component_name, known_value, manufacturer_scope_components, package_components,
+    truncate_list,
 };
 
 /// CRA enforcement phase

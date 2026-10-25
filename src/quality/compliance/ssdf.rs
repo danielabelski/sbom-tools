@@ -283,13 +283,12 @@ impl ComplianceChecker {
             });
         }
 
-        // PS.2 — Build integrity: components should have hashes
-        let total = sbom.components.len();
-        let without_hash = sbom
-            .components
-            .values()
-            .filter(|c| c.hashes.is_empty())
-            .count();
+        // PS.2 — Build integrity: components should have hashes. Package
+        // practices (hash, identifier, supplier) judge package-scoped
+        // components only — crypto assets, files and services carry none.
+        let packages: Vec<_> = package_components(sbom).collect();
+        let total = packages.len();
+        let without_hash = packages.iter().filter(|c| c.hashes.is_empty()).count();
         if without_hash > 0 {
             let pct = (without_hash * 100) / total.max(1);
             violations.push(Violation {
@@ -373,7 +372,8 @@ impl ComplianceChecker {
         }
 
         // PW.4 — Dependency management: dependency relationships required
-        if sbom.components.len() > 1 && sbom.edges.is_empty() {
+        // between packages
+        if total > 1 && sbom.edges.is_empty() {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,
                 category: ViolationCategory::DependencyInfo,
@@ -436,9 +436,8 @@ impl ComplianceChecker {
         // RV.1 — Component identification: unique identifiers
         // (PURL/CPE/SWHID/SWID via `has_cra_identifier`, so SWHID-only SPDX
         // components are not flagged)
-        let without_id = sbom
-            .components
-            .values()
+        let without_id = packages
+            .iter()
             .filter(|c| !c.identifiers.has_cra_identifier())
             .count();
         if without_id > 0 {
@@ -463,11 +462,7 @@ impl ComplianceChecker {
 
         // PS.3 — Supplier identification (placeholder values such as
         // NOASSERTION do not satisfy the element)
-        let without_supplier = sbom
-            .components
-            .values()
-            .filter(|c| !has_known_producer(c))
-            .count();
+        let without_supplier = packages.iter().filter(|c| !has_known_producer(c)).count();
         if without_supplier > 0 {
             violations.push(Violation {
                 severity: ViolationSeverity::Warning,

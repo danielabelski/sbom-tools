@@ -583,7 +583,9 @@ impl ComplianceChecker {
         // dependency graph, or link to separate SBOM documents per
         // dependency (the element's linking allowance — an external
         // reference of BOM type is accepted as alternative evidence).
-        if sbom.components.len() > 1 && sbom.edges.is_empty() {
+        // Dependency relationships between packages: crypto assets, files
+        // and services need not join the graph.
+        if package_components(sbom).nth(1).is_some() && sbom.edges.is_empty() {
             let has_external_sbom_link = sbom.components.values().any(|c| {
                 c.external_refs
                     .iter()

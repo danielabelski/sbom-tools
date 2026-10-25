@@ -213,20 +213,25 @@ pub enum ComponentType {
     Platform,
     DeviceDriver,
     Cryptographic,
+    /// A CycloneDX service (SaaSBOM): an endpoint the product calls, not a
+    /// package it ships.
+    Service,
     Other(String),
 }
 
 impl ComponentType {
     /// Whether package-level SBOM elements (version, supplier, license,
     /// unique identifier, hash, dependency-graph membership) apply. File /
-    /// snippet entries are name+hash inventory records and CycloneDX
+    /// snippet entries are name+hash inventory records, CycloneDX
     /// `cryptographic-asset`s describe algorithms, keys, certificates and
-    /// protocols — neither is a package, so standards scope those elements
-    /// away from them. A crypto *library* (e.g. OpenSSL typed `library`)
-    /// is still a package.
+    /// protocols, and CycloneDX services are endpoints whose schema carries
+    /// no purl or hashes — none is a package, so standards scope those
+    /// elements away from them. A crypto *library* (e.g. OpenSSL typed
+    /// `library`) is still a package, and so is an SPDX package whose
+    /// purpose is SOURCE, ARCHIVE or FILE.
     #[must_use]
     pub const fn is_package_scoped(&self) -> bool {
-        !matches!(self, Self::File | Self::Cryptographic)
+        !matches!(self, Self::File | Self::Cryptographic | Self::Service)
     }
 }
 
@@ -246,6 +251,7 @@ impl std::fmt::Display for ComponentType {
             Self::Platform => write!(f, "platform"),
             Self::DeviceDriver => write!(f, "device-driver"),
             Self::Cryptographic => write!(f, "cryptographic"),
+            Self::Service => write!(f, "service"),
             Self::Other(s) => write!(f, "{s}"),
         }
     }

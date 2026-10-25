@@ -197,7 +197,7 @@ impl ComplianceChecker {
             }
 
             // CRA: Check for primary/root product component identification
-            if sbom.primary_component_id.is_none() && sbom.components.len() > 1 {
+            if sbom.primary_component_id.is_none() && package_components(sbom).nth(1).is_some() {
                 violations.push(Violation {
                     severity: ViolationSeverity::Warning,
                     category: ViolationCategory::DocumentMetadata,
@@ -586,6 +586,8 @@ impl ComplianceChecker {
             inventory_requirement,
         ));
 
+        // All components: names apply to every component; the package
+        // carve-out follows the name check below.
         for comp in sbom.components.values() {
             // All levels: component must have a name. Whitespace-only names
             // and placeholder sentinels count as missing, but genuine
@@ -944,8 +946,11 @@ impl ComplianceChecker {
                 | ComplianceLevel::CraOssSteward
                 | ComplianceLevel::Comprehensive
         ) {
+            // Dependency relationships are a package-graph element: crypto
+            // assets, files and services need not appear in it.
             let has_deps = !sbom.edges.is_empty();
-            let has_multiple_components = sbom.components.len() > 1;
+            let package_total = package_components(sbom).count();
+            let has_multiple_components = package_total > 1;
 
             let (requirement, rule_id) = match self.level {
                 ComplianceLevel::CraPhase1
@@ -1034,11 +1039,9 @@ impl ComplianceChecker {
                     sbom.document.completeness_declaration,
                     CD::Incomplete | CD::IncompleteFirstPartyOnly | CD::IncompleteThirdPartyOnly
                 );
-                let total = sbom.components.len();
-                let orphans = sbom
-                    .components
-                    .iter()
-                    .filter(|(id, c)| !connected.contains(id) && !declares_no_deps(c))
+                let total = package_total;
+                let orphans = package_components(sbom)
+                    .filter(|c| !connected.contains(&c.canonical_id) && !declares_no_deps(c))
                     .count();
                 // FDA keeps the retired fast-path's any-orphan sensitivity
                 // ("each component's dependencies"); other standards warn
@@ -1097,7 +1100,10 @@ impl ComplianceChecker {
         }
 
         // CRA: warn if multiple root components (no incoming edges) and no primary component set
-        if self.level.is_cra() && sbom.components.len() > 1 && sbom.primary_component_id.is_none() {
+        if self.level.is_cra()
+            && package_components(sbom).nth(1).is_some()
+            && sbom.primary_component_id.is_none()
+        {
             use std::collections::HashSet;
             let mut incoming: HashSet<&crate::model::CanonicalId> = HashSet::new();
             for edge in &sbom.edges {
@@ -1252,7 +1258,8 @@ impl ComplianceChecker {
             });
         }
 
-        // Check for bom-ref on components (important for CycloneDX)
+        // Check for bom-ref on components (important for CycloneDX).
+        // All components: every CycloneDX element should carry a bom-ref.
         for comp in sbom.components.values() {
             if comp.identifiers.format_id == comp.name {
                 // Likely missing bom-ref
@@ -1297,6 +1304,7 @@ impl ComplianceChecker {
         // SPDX requires element identifiers
         // SPDX 2.x uses SPDXRef- prefix; SPDX 3.0 uses URN-style IDs (e.g., urn:spdx:...)
         let is_spdx3 = version.starts_with("3.");
+        // All components: every SPDX element needs a valid identifier.
         for comp in sbom.components.values() {
             let valid_id = if is_spdx3 {
                 // SPDX 3.0 uses URN/IRI identifiers

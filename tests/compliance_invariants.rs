@@ -117,3 +117,133 @@ fn a_lone_primary_component_is_an_inventory() {
         );
     }
 }
+
+/// Source scan: a checker loop or count over every component must either
+/// carve out non-package components (`is_package_scoped` or
+/// `package_components`) or say why its rule covers them all, with an
+/// `All components:` comment just above. The carve-out stopped halfway
+/// through the standards once (review finding V5); this keeps the next
+/// package rule from forgetting it.
+#[test]
+fn whole_inventory_walks_are_scoped_or_justified() {
+    fn floor(s: &str, mut i: usize) -> usize {
+        while !s.is_char_boundary(i) {
+            i -= 1;
+        }
+        i
+    }
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/quality/compliance");
+    let mut offenders = Vec::new();
+    for entry in std::fs::read_dir(&dir).expect("compliance sources") {
+        let path = entry.expect("dir entry").path();
+        if path.extension().is_none_or(|e| e != "rs") {
+            continue;
+        }
+        let src = std::fs::read_to_string(&path).expect("readable source");
+        // Unit tests at the bottom of a file are not checker code.
+        let code = src.split("#[cfg(test)]").next().unwrap_or_default();
+        // Drop whitespace so multi-line method chains match one pattern.
+        let flat: String = code.chars().filter(|c| !c.is_whitespace()).collect();
+        for pattern in [
+            "insbom.components.values()",
+            "sbom.components.values().filter(",
+        ] {
+            let mut from = 0;
+            while let Some(found) = flat[from..].find(pattern) {
+                let at = from + found;
+                let before = &flat[floor(&flat, at.saturating_sub(400))..at];
+                let after = &flat[at..floor(&flat, (at + 1200).min(flat.len()))];
+                let justified = before.contains("Allcomponents:");
+                let scoped =
+                    after.contains("is_package_scoped") || after.contains("package_components");
+                if !justified && !scoped {
+                    let name = path.file_name().unwrap_or_default().to_string_lossy();
+                    offenders.push(format!("{name}: …{}…", &after[..floor(after, 60)]));
+                }
+                from = at + pattern.len();
+            }
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "unscoped whole-inventory walks (add a package carve-out or an \
+         `All components:` comment saying why the rule covers every component):\n  {}",
+        offenders.join("\n  ")
+    );
+}
+
+/// Files, crypto assets and services never draw package findings (review
+/// finding V5): the bare ones below carry no version, supplier, identifier,
+/// hash or licence, so any package rule that judged them would name them.
+#[test]
+fn non_package_components_never_draw_package_findings() {
+    const SHA512: &str = "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4\
+                          8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4";
+    let raw = format!(
+        r#"{{
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "serialNumber": "urn:uuid:0b1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e",
+        "version": 1,
+        "metadata": {{
+            "timestamp": "2026-10-01T00:00:00Z",
+            "authors": [{{ "name": "Example Corp", "email": "sbom@example.com" }}],
+            "tools": {{ "components": [{{ "type": "application", "name": "gen", "version": "1.0.0" }}] }},
+            "component": {{
+                "type": "application", "bom-ref": "ref-app", "name": "app", "version": "1.0.0",
+                "purl": "pkg:generic/app@1.0.0", "supplier": {{ "name": "Example Corp" }},
+                "hashes": [{{ "alg": "SHA-512", "content": "{SHA512}" }}],
+                "licenses": [{{ "license": {{ "id": "MIT" }} }}]
+            }}
+        }},
+        "components": [
+            {{
+                "type": "library", "bom-ref": "ref-lib", "name": "libgood", "version": "2.0.0",
+                "purl": "pkg:npm/libgood@2.0.0", "supplier": {{ "name": "Good Inc" }},
+                "hashes": [{{ "alg": "SHA-512", "content": "{SHA512}" }}],
+                "licenses": [{{ "license": {{ "id": "MIT" }} }}]
+            }},
+            {{ "type": "file", "bom-ref": "ref-readme", "name": "README.md" }},
+            {{
+                "type": "cryptographic-asset", "bom-ref": "ref-aes", "name": "AES-128-GCM",
+                "cryptoProperties": {{ "assetType": "algorithm" }}
+            }}
+        ],
+        "services": [{{ "bom-ref": "ref-billing", "name": "billing-api" }}],
+        "dependencies": [
+            {{ "ref": "ref-app", "dependsOn": ["ref-lib"] }},
+            {{ "ref": "ref-lib", "dependsOn": [] }}
+        ]
+    }}"#
+    );
+    let bare = [
+        "README.md",
+        "AES-128-GCM",
+        "billing-api",
+        "ref-readme",
+        "ref-aes",
+        "ref-billing",
+    ];
+    let mut offenders = Vec::new();
+    for selector in inventory_standards() {
+        let result = check(&raw, selector);
+        for v in &result.violations {
+            let named = [
+                Some(v.message.as_str()),
+                v.element.as_deref(),
+                v.component_id.as_deref(),
+            ]
+            .into_iter()
+            .flatten()
+            .any(|text| bare.iter().any(|b| text.contains(b)));
+            if named {
+                offenders.push(format!("{selector} {}: {}", v.rule_id, v.message));
+            }
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "package findings on non-package components:\n  {}",
+        offenders.join("\n  ")
+    );
+}

@@ -324,6 +324,7 @@ impl ComplianceChecker {
         // inventory of unevaluable assets cannot satisfy the CNSA2-000 gate.
         let mut crypto_assets_evaluated = 0usize;
 
+        // All components: the loop selects cryptographic assets by type.
         for comp in sbom.components.values() {
             if comp.component_type != ComponentType::Cryptographic {
                 continue;
@@ -762,6 +763,7 @@ impl ComplianceChecker {
         // substantive check are counted.
         let mut crypto_assets_evaluated = 0usize;
 
+        // All components: the loop selects cryptographic assets by type.
         for comp in sbom.components.values() {
             if comp.component_type != ComponentType::Cryptographic {
                 continue;
