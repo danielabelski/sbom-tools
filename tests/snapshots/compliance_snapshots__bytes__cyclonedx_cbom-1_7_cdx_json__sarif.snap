@@ -10,7 +10,7 @@ source: tests/compliance_snapshots.rs
         "driver": {
           "name": "sbom-tools",
           "version": "[VERSION]",
-          "informationUri": "https://github.com/binarly-io/sbom-tools",
+          "informationUri": "https://github.com/sbom-tool/sbom-tools",
           "rules": [
             {
               "id": "SBOM-CNSA2-000",
@@ -20,7 +20,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-001",
@@ -30,7 +31,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-002",
@@ -40,7 +42,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-003",
@@ -50,7 +53,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-004",
@@ -60,7 +64,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-005",
@@ -70,7 +75,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-006",
@@ -80,7 +86,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-007",
@@ -90,7 +97,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-008",
@@ -100,7 +108,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-ALG-UNKNOWN",
@@ -110,7 +119,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-CERT-001",
@@ -120,7 +130,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-CERT-UNKNOWN",
@@ -130,7 +141,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-PROTO-001",
@@ -140,7 +152,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-PROTO-002",
@@ -150,7 +163,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-PROTO-UNKNOWN",
@@ -160,7 +174,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "error"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-CNSA2-GENERAL",
@@ -170,7 +185,8 @@ source: tests/compliance_snapshots.rs
               },
               "defaultConfiguration": {
                 "level": "warning"
-              }
+              },
+              "helpUri": "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF"
             },
             {
               "id": "SBOM-PQC-000",

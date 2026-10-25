@@ -30,26 +30,6 @@
 
 use super::*;
 
-/// Parse a dotted spec version ("1.6", "3.0.1") into numeric
-/// `(major, minor, patch)`. Missing trailing segments count as zero; a
-/// present-but-non-numeric segment (or an empty string) yields `None` so the
-/// caller can skip the comparison instead of false-failing synthetic
-/// documents that carry no version. (Same skip-when-unparseable posture as
-/// the BSI TR-03183-2 §4 gate in `bsi.rs`.)
-fn parse_spec_version(v: &str) -> Option<(u64, u64, u64)> {
-    let mut parts = v.trim().split('.');
-    let major: u64 = parts.next()?.parse().ok()?;
-    let minor: u64 = match parts.next() {
-        Some(s) => s.parse().ok()?,
-        None => 0,
-    };
-    let patch: u64 = match parts.next() {
-        Some(s) => s.parse().ok()?,
-        None => 0,
-    };
-    Some((major, minor, patch))
-}
-
 /// Explicit-unknown sentinel: the marker an SBOM author uses to state that a
 /// value is unknown rather than silently omitting it. The 2026 elements'
 /// escape hatches ("the SBOM author should indicate the information is
@@ -182,12 +162,12 @@ impl ComplianceChecker {
         // the concrete floor — CycloneDX 1.4+ / SPDX 2.2+ — is tool policy
         // mirroring the repo's EO 14028 machine-readable gate, and the
         // message says so. Unparseable/absent spec versions skip the gate
-        // rather than false-failing (parse_spec_version).
+        // rather than false-failing (`DocumentMetadata::spec_version_parsed`).
         let minimum = match sbom.document.format {
-            SbomFormat::CycloneDx => (1, 4, 0),
-            SbomFormat::Spdx => (2, 2, 0),
+            SbomFormat::CycloneDx => crate::model::SpecVersion::new(1, 4, 0),
+            SbomFormat::Spdx => crate::model::SpecVersion::new(2, 2, 0),
         };
-        if let Some(actual) = parse_spec_version(&sbom.document.spec_version)
+        if let Some(actual) = sbom.document.spec_version_parsed()
             && actual < minimum
         {
             violations.push(Violation {

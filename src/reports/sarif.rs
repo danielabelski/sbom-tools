@@ -272,7 +272,7 @@ impl ReportGenerator for SarifReporter {
                     driver: SarifDriver {
                         name: "sbom-tools".to_string(),
                         version: env!("CARGO_PKG_VERSION").to_string(),
-                        information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                        information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                         rules: SarifRuleWithUri::wrap_all(rules),
                     },
                 },
@@ -337,7 +337,7 @@ impl ReportGenerator for SarifReporter {
                     driver: SarifDriver {
                         name: "sbom-tools".to_string(),
                         version: env!("CARGO_PKG_VERSION").to_string(),
-                        information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                        information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                         rules: SarifRuleWithUri::wrap_all(rules),
                     },
                 },
@@ -539,7 +539,7 @@ pub fn generate_ai_readiness_sarif(
                 driver: SarifDriver {
                     name: "sbom-tools".to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
-                    information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                    information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                     rules: SarifRuleWithUri::wrap_all(get_sarif_aibom_rules()),
                 },
             },
@@ -639,7 +639,7 @@ pub fn generate_compliance_sarif(result: &ComplianceResult) -> Result<String, Re
                 driver: SarifDriver {
                     name: "sbom-tools".to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
-                    information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                    information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                     rules,
                 },
             },
@@ -695,7 +695,7 @@ pub fn generate_multi_compliance_sarif(
                 driver: SarifDriver {
                     name: "sbom-tools".to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
-                    information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                    information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                     rules: SarifRuleWithUri::wrap_all(all_rules),
                 },
             },
@@ -778,7 +778,7 @@ pub fn generate_quality_sarif(
                 driver: SarifDriver {
                     name: "sbom-tools".to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
-                    information_uri: "https://github.com/binarly-io/sbom-tools".to_string(),
+                    information_uri: env!("CARGO_PKG_REPOSITORY").to_string(),
                     rules,
                 },
             },
@@ -956,7 +956,11 @@ fn rule_help_uri(rule_id: &str) -> Option<&'static str> {
         Some("https://www.ntia.gov/report/2021/minimum-elements-software-bill-materials-sbom")
     } else if rule_id.starts_with("SBOM-PQC-") || rule_id.starts_with("SBOM-NIST-PQC-") {
         Some("https://csrc.nist.gov/projects/post-quantum-cryptography")
-    } else if rule_id.starts_with("SBOM-CNSA-") {
+    } else if rule_id.starts_with("SBOM-QUALITY-") {
+        // Tool-defined quality rules (Minimum / Standard / Comprehensive)
+        // follow no external standard; link the tool's own documentation.
+        Some(concat!(env!("CARGO_PKG_REPOSITORY"), "#validate"))
+    } else if rule_id.starts_with("SBOM-CNSA2-") {
         Some(
             "https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF",
         )

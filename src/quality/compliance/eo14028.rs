@@ -43,27 +43,20 @@ impl ComplianceChecker {
             .iter()
             .any(|s| evidences_autogen_provenance(s.requirement));
 
-        // Sec 4(e) — Machine-readable format
-        let format_ok = match sbom.document.format {
-            crate::model::SbomFormat::CycloneDx => {
-                let v = &sbom.document.spec_version;
-                !(v.starts_with("1.0")
-                    || v.starts_with("1.1")
-                    || v.starts_with("1.2")
-                    || v.starts_with("1.3"))
-            }
-            crate::model::SbomFormat::Spdx => {
-                // The NTIA minimum-elements report that EO 14028 §4(e)
-                // defers to names SPDX (then at 2.2) as an accepted format,
-                // so SPDX 2.2 documents are machine-readable under the EO.
-                // An empty spec_version means the document declared no
-                // version (parsers never fabricate one): skip rather than
-                // false-fail, matching the CycloneDX arm where an empty
-                // version also passes.
-                let v = &sbom.document.spec_version;
-                v.is_empty() || v.starts_with("2.2") || v.starts_with("2.3") || v.starts_with("3.")
-            }
+        // Sec 4(e) — Machine-readable format: CycloneDX 1.4+, SPDX 2.2+.
+        // The NTIA minimum-elements report that EO 14028 §4(e) defers to
+        // names SPDX (then at 2.2) as an accepted format, so SPDX 2.2
+        // documents are machine-readable under the EO. Versions compare
+        // numerically ("1.10" is newer than "1.7", not "1.1"); an absent or
+        // unparseable version skips the gate instead of false-failing.
+        let minimum = match sbom.document.format {
+            crate::model::SbomFormat::CycloneDx => crate::model::SpecVersion::new(1, 4, 0),
+            crate::model::SbomFormat::Spdx => crate::model::SpecVersion::new(2, 2, 0),
         };
+        let format_ok = sbom
+            .document
+            .spec_version_parsed()
+            .is_none_or(|v| v >= minimum);
         if !format_ok {
             violations.push(Violation {
                 severity: ViolationSeverity::Error,

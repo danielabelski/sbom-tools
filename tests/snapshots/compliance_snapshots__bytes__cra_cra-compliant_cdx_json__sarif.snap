@@ -10,7 +10,7 @@ source: tests/compliance_snapshots.rs
         "driver": {
           "name": "sbom-tools",
           "version": "[VERSION]",
-          "informationUri": "https://github.com/binarly-io/sbom-tools",
+          "informationUri": "https://github.com/sbom-tool/sbom-tools",
           "rules": [
             {
               "id": "SBOM-CRA-SBOM-FRESHNESS",
@@ -655,26 +655,6 @@ source: tests/compliance_snapshots.rs
       },
       "results": [
         {
-          "ruleId": "SBOM-CRA-ART-13-8",
-          "level": "note",
-          "message": {
-            "text": "EU CRA Phase 2 (2027): [CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates (Requirement: CRA Art. 13(8) / 13(19): Support period disclosure) [Element: unknown]"
-          },
-          "locations": [],
-          "properties": {
-            "standardIds": [
-              "CRA:Art. 13(8)",
-              "CRA:Art. 13(19)",
-              "CRA-Annex:Annex II (7)"
-            ],
-            "standardHelpUris": [
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng",
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng",
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-            ]
-          }
-        },
-        {
           "ruleId": "SBOM-CRA-GENERAL",
           "level": "note",
           "message": {
@@ -726,26 +706,6 @@ source: tests/compliance_snapshots.rs
               "CRA-Annex:Annex I Part II (1)"
             ],
             "standardHelpUris": [
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
-            ]
-          }
-        },
-        {
-          "ruleId": "SBOM-CRA-ART-13-8",
-          "level": "note",
-          "message": {
-            "text": "EU CRA Phase 1 (2026): [CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates (Requirement: CRA Art. 13(8) / 13(19): Support period disclosure) [Element: unknown]"
-          },
-          "locations": [],
-          "properties": {
-            "standardIds": [
-              "CRA:Art. 13(8)",
-              "CRA:Art. 13(19)",
-              "CRA-Annex:Annex II (7)"
-            ],
-            "standardHelpUris": [
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng",
-              "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng",
               "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
             ]
           }

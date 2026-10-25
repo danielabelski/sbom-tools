@@ -584,7 +584,6 @@
       "checks": [
         {
           "standard": "cra",
-          "xfail": "0.7",
           "expect": {
             "rules_absent": [
               "SBOM-CRA-ART-13-8"
@@ -601,7 +600,6 @@
       "checks": [
         {
           "standard": "eo14028",
-          "xfail": "0.7",
           "expect": {
             "rules_absent": [
               "SBOM-EO14028-FORMAT"
@@ -610,7 +608,6 @@
         },
         {
           "standard": "cra",
-          "xfail": "0.7",
           "expect": {
             "rules_absent": [
               "SBOM-CRA-MACHINE-READABLE"

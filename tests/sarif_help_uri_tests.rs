@@ -4,7 +4,7 @@
 //! - `StandardRef::new` auto-populates `help_uri` from `StandardKind`
 //!   (canonical EUR-Lex / BSI / NIST / OASIS URLs).
 //! - SARIF rule definitions include `helpUri` for CRA-, BSI-, NTIA-,
-//!   SSDF-, EO-, FDA-, PQC-, CSAF-, CNSA-prefixed rules.
+//!   SSDF-, EO-, FDA-, PQC-, CSAF-, CNSA2-prefixed rules (every registered rule, in fact).
 //! - SARIF result `properties.standardHelpUris` parallels `standardIds`
 //!   when violations carry `StandardRef::help_uri`.
 
@@ -142,4 +142,36 @@ fn sarif_output_includes_help_uri_for_bsi_rules() {
         bsi_rule_with_uri,
         "BSI rules must carry a bsi.bund.de helpUri"
     );
+}
+
+/// Every rule a SARIF catalogue declares links to its standard. The CNSA 2.0
+/// family carried no helpUri at all: the prefix table tested `SBOM-CNSA-`
+/// while every rule ID is `SBOM-CNSA2-…`.
+#[test]
+fn every_declared_sarif_rule_has_a_help_uri() {
+    let mut missing = std::collections::BTreeSet::new();
+    for level in ComplianceLevel::all() {
+        let result = ComplianceChecker::new(*level).check(&NormalizedSbom::default());
+        let sarif = generate_compliance_sarif(&result).expect("SARIF generation");
+        let json: serde_json::Value = serde_json::from_str(&sarif).expect("valid JSON");
+        for run in json["runs"].as_array().into_iter().flatten() {
+            assert_eq!(
+                run["tool"]["driver"]["informationUri"], "https://github.com/sbom-tool/sbom-tools",
+                "informationUri must point at the current repository"
+            );
+            for rule in run["tool"]["driver"]["rules"]
+                .as_array()
+                .into_iter()
+                .flatten()
+            {
+                let has_uri = rule["helpUri"]
+                    .as_str()
+                    .is_some_and(|u| u.starts_with("https://"));
+                if !has_uri {
+                    missing.insert(rule["id"].as_str().unwrap_or("?").to_string());
+                }
+            }
+        }
+    }
+    assert!(missing.is_empty(), "rules without a helpUri: {missing:?}");
 }

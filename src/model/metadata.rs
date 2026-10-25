@@ -104,7 +104,67 @@ pub struct SignatureInfo {
     pub has_value: bool,
 }
 
+/// A format spec version (CycloneDX `specVersion`, SPDX `spdxVersion`)
+/// parsed into numbers, so versions compare numerically: "1.10" is newer
+/// than "1.7", where string-prefix tests read it as "1.1".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SpecVersion {
+    pub major: u64,
+    pub minor: u64,
+    pub patch: u64,
+}
+
+impl SpecVersion {
+    #[must_use]
+    pub const fn new(major: u64, minor: u64, patch: u64) -> Self {
+        Self {
+            major,
+            minor,
+            patch,
+        }
+    }
+
+    /// Parse "1.6", "3.0.1", "SPDX-2.3" or "v1.6". Missing trailing
+    /// segments count as zero; an empty or non-numeric value, or one with
+    /// more than three segments, yields `None` so callers can skip a version
+    /// gate instead of false-failing a document that declares no version.
+    #[must_use]
+    pub fn parse(value: &str) -> Option<Self> {
+        let v = value.trim();
+        let v = v.strip_prefix("SPDX-").unwrap_or(v);
+        let v = v.strip_prefix(['v', 'V']).unwrap_or(v);
+        let mut parts = v.split('.');
+        let major = parts.next()?.parse().ok()?;
+        let minor = match parts.next() {
+            Some(s) => s.parse().ok()?,
+            None => 0,
+        };
+        let patch = match parts.next() {
+            Some(s) => s.parse().ok()?,
+            None => 0,
+        };
+        if parts.next().is_some() {
+            return None;
+        }
+        Some(Self::new(major, minor, patch))
+    }
+}
+
+impl std::fmt::Display for SpecVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
 impl DocumentMetadata {
+    /// The spec version as numbers, or `None` when it is empty or cannot be
+    /// parsed. Every format-version gate compares this value; see
+    /// [`SpecVersion`].
+    #[must_use]
+    pub fn spec_version_parsed(&self) -> Option<SpecVersion> {
+        SpecVersion::parse(&self.spec_version)
+    }
+
     /// Whether the document carries a real creation timestamp.
     ///
     /// Parsers substitute [`DateTime::UNIX_EPOCH`] when the source document
@@ -765,4 +825,37 @@ pub struct DatasetInfo {
     /// `dataset_anonymizationMethodUsed`). Surfaced for the BSI/G7
     /// SBOM-for-AI "Datasets" cluster provenance element.
     pub anonymization: Vec<String>,
+}
+
+#[cfg(test)]
+mod spec_version_tests {
+    use super::SpecVersion;
+
+    #[test]
+    fn parses_common_spellings() {
+        assert_eq!(SpecVersion::parse("1.6"), Some(SpecVersion::new(1, 6, 0)));
+        assert_eq!(SpecVersion::parse("3.0.1"), Some(SpecVersion::new(3, 0, 1)));
+        assert_eq!(
+            SpecVersion::parse("SPDX-2.3"),
+            Some(SpecVersion::new(2, 3, 0))
+        );
+        assert_eq!(
+            SpecVersion::parse(" v1.7 "),
+            Some(SpecVersion::new(1, 7, 0))
+        );
+        assert_eq!(SpecVersion::parse("2"), Some(SpecVersion::new(2, 0, 0)));
+        for bad in ["", "   ", "abc", "1.x", "1.2.3.4", "1..2"] {
+            assert_eq!(SpecVersion::parse(bad), None, "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn compares_numerically_not_by_prefix() {
+        // String prefixes read "1.10" as "1.1"; numerically it is newer.
+        let v110 = SpecVersion::parse("1.10").expect("parses");
+        assert!(v110 > SpecVersion::new(1, 7, 0));
+        assert!(SpecVersion::new(1, 0, 0) < SpecVersion::new(1, 4, 0));
+        assert!(SpecVersion::new(2, 0, 0) > SpecVersion::new(1, 7, 0));
+        assert!(SpecVersion::new(3, 0, 1) > SpecVersion::new(3, 0, 0));
+    }
 }

@@ -10,7 +10,7 @@ source: tests/compliance_snapshots.rs
         "driver": {
           "name": "sbom-tools",
           "version": "[VERSION]",
-          "informationUri": "https://github.com/binarly-io/sbom-tools",
+          "informationUri": "https://github.com/sbom-tool/sbom-tools",
           "rules": [
             {
               "id": "SBOM-CRA-SBOM-FRESHNESS",

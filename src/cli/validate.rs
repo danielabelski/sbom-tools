@@ -36,9 +36,9 @@ pub const VALIDATE_OUTPUT_FORMATS: &[ReportFormat] = &[
 /// usage/configuration error surfaced from this function (unsupported output
 /// format, invalid `--as-of` or `--cra-product-class`, broken explicit
 /// sidecar) propagates as an `Err`, which the binary's `main()` maps to
-/// process exit code 1 (and clap parse errors exit 2) — the same numbers as
-/// the gate codes above. CI pipelines must therefore not interpret a nonzero
-/// exit as a compliance verdict unless the expected report was produced.
+/// [`exit_codes::ERROR`] (3). Clap's own argument-parse errors exit 2, the
+/// same number as the warnings gate, so CI pipelines must not read exit 2 as
+/// a compliance verdict unless the expected report was produced.
 ///
 /// The caller is responsible for calling `std::process::exit()` with the
 /// returned code when it is non-zero.

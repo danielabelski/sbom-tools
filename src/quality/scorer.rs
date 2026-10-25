@@ -620,6 +620,9 @@ impl QualityScorer {
 
         let total_components = sbom.components.len();
         let is_cyclonedx = sbom.document.format == SbomFormat::CycloneDx;
+        // Time-dependent metrics (document age, certificate expiry) are
+        // judged at the pinned `--as-of` instant, like the compliance checks.
+        let now = self.as_of.unwrap_or_else(chrono::Utc::now);
 
         // Calculate all metrics
         let completeness_metrics = CompletenessMetrics::from_sbom(sbom);
@@ -628,10 +631,10 @@ impl QualityScorer {
         let vulnerability_metrics = VulnerabilityMetrics::from_sbom(sbom);
         let dependency_metrics = DependencyMetrics::from_sbom(sbom);
         let hash_quality_metrics = HashQualityMetrics::from_sbom(sbom);
-        let provenance_metrics = ProvenanceMetrics::from_sbom(sbom);
+        let provenance_metrics = ProvenanceMetrics::from_sbom_at(sbom, now);
         let auditability_metrics = AuditabilityMetrics::from_sbom(sbom);
         let lifecycle_metrics = LifecycleMetrics::from_sbom(sbom);
-        let cryptography_metrics = CryptographyMetrics::from_sbom(sbom);
+        let cryptography_metrics = CryptographyMetrics::from_sbom_at(sbom, now);
 
         // Calculate individual category scores
         let completeness_score = completeness_metrics.overall_score(&self.completeness_weights);
@@ -812,7 +815,8 @@ impl QualityScorer {
         let vulnerability_metrics = VulnerabilityMetrics::from_sbom(sbom);
         let dependency_metrics = DependencyMetrics::from_sbom(sbom);
         let hash_quality_metrics = HashQualityMetrics::from_sbom(sbom);
-        let provenance_metrics = ProvenanceMetrics::from_sbom(sbom);
+        let provenance_metrics =
+            ProvenanceMetrics::from_sbom_at(sbom, self.as_of.unwrap_or_else(chrono::Utc::now));
         let auditability_metrics = AuditabilityMetrics::from_sbom(sbom);
         let lifecycle_metrics = LifecycleMetrics::from_sbom(sbom);
 

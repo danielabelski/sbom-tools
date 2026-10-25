@@ -13,6 +13,15 @@ use std::path::Path;
 
 const FIXTURES_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 
+/// Pinned evaluation instant for certificate-expiry assertions, so no test
+/// changes verdict as real time passes (cbom-quantum-ready's certificate
+/// expires on 2029-01-01).
+fn as_of(rfc3339: &str) -> chrono::DateTime<chrono::Utc> {
+    chrono::DateTime::parse_from_rfc3339(rfc3339)
+        .expect("valid timestamp")
+        .with_timezone(&chrono::Utc)
+}
+
 fn fixture_path(name: &str) -> std::path::PathBuf {
     Path::new(FIXTURES_DIR).join(name)
 }
@@ -224,7 +233,7 @@ fn parse_cbom_weak_crypto() {
 #[test]
 fn crypto_metrics_quantum_ready() {
     let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-quantum-ready.cdx.json")).unwrap();
-    let metrics = CryptographyMetrics::from_sbom(&parsed);
+    let metrics = CryptographyMetrics::from_sbom_at(&parsed, as_of("2026-10-12T00:00:00Z"));
 
     assert!(metrics.has_data());
     assert!(metrics.algorithms_count >= 10);
@@ -238,13 +247,46 @@ fn crypto_metrics_quantum_ready() {
     assert!(metrics.quality_score().unwrap() > 80.0);
 }
 
+/// `--as-of` reaches certificate expiry in the quality metrics: the same
+/// certificate is valid before 2029-01-01 and expired after it (review
+/// finding T1 — the metrics read the wall clock regardless).
+#[test]
+fn crypto_metrics_judge_certificate_expiry_at_the_pinned_instant() {
+    let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-quantum-ready.cdx.json")).unwrap();
+    let before = CryptographyMetrics::from_sbom_at(&parsed, as_of("2026-10-12T00:00:00Z"));
+    let after = CryptographyMetrics::from_sbom_at(&parsed, as_of("2030-06-01T00:00:00Z"));
+    assert_eq!(before.expired_certificates, 0);
+    assert_eq!(
+        after.expired_certificates, 1,
+        "the 2029 certificate has expired by 2030"
+    );
+
+    let report = sbom_tools::quality::QualityScorer::new(sbom_tools::quality::ScoringProfile::Cbom)
+        .with_as_of(as_of("2030-06-01T00:00:00Z"))
+        .score(&parsed);
+    assert_eq!(
+        report.cryptography_metrics.expired_certificates, 1,
+        "QualityScorer::with_as_of must reach the cryptography metrics"
+    );
+}
+
 #[test]
 fn crypto_metrics_weak_crypto() {
     let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-weak-crypto.cdx.json")).unwrap();
-    let metrics = CryptographyMetrics::from_sbom(&parsed);
+    let metrics = CryptographyMetrics::from_sbom_at(&parsed, as_of("2026-10-12T00:00:00Z"));
 
     assert!(metrics.has_data());
     assert!(metrics.weak_algorithm_count >= 5, "expected >=5 weak algos");
+    // A broken algorithm counts as weak, not also as quantum-vulnerable
+    // (review finding T1: broken primitives were counted twice).
+    assert!(
+        metrics.quantum_vulnerable_count + metrics.weak_algorithm_count <= metrics.algorithms_count,
+        "an algorithm must land in at most one of the weak / quantum-vulnerable buckets: \
+         {} + {} > {}",
+        metrics.quantum_vulnerable_count,
+        metrics.weak_algorithm_count,
+        metrics.algorithms_count
+    );
     assert!(metrics.expired_certificates >= 1);
     assert!(metrics.compromised_keys >= 1);
     assert!(
@@ -909,4 +951,17 @@ fn bom_ref_index_resolves_crypto_refs() {
     // Resolve the bom-ref through the index
     let resolved = index.resolve_bom_ref(sig_ref);
     assert!(resolved.is_some(), "should resolve bom-ref '{sig_ref}'");
+}
+
+/// A certificate's signature reference earns metric credit only when it
+/// resolves inside the SBOM; a dangling opaque ref used to count.
+#[test]
+fn crypto_metrics_do_not_credit_dangling_refs() {
+    let parsed = parse_sbom(&fixture_path("cyclonedx/cbom-unclassifiable-refs.cdx.json")).unwrap();
+    let metrics = CryptographyMetrics::from_sbom_at(&parsed, as_of("2026-10-12T00:00:00Z"));
+    assert!(metrics.certificates_count >= 1);
+    assert_eq!(
+        metrics.certs_with_signature_algo_ref, 0,
+        "the dangling 'sig-algo-42' reference must not count"
+    );
 }

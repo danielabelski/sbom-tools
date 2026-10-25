@@ -17,7 +17,7 @@ source: tests/compliance_snapshots.rs
         "description": "Validation results for EU CRA Phase 2 (2027), derived only from the supplied SBOM.",
         "findings": [
           {
-            "description": "Overall verdict for EU CRA Phase 2 (2027): 0 error(s), 1 warning(s), 4 informational finding(s).",
+            "description": "Overall verdict for EU CRA Phase 2 (2027): 0 error(s), 1 warning(s), 3 informational finding(s).",
             "target": {
               "status": {
                 "state": "satisfied"
@@ -29,7 +29,7 @@ source: tests/compliance_snapshots.rs
             "uuid": "34dc13d9-59f3-58cd-bf7c-7dd0ea10e28d"
           },
           {
-            "description": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
+            "description": "Component 'lib-a' may be missing bom-ref",
             "related-observations": [
               {
                 "observation-uuid": "2f3b6e76-23a8-568b-94be-c6c41587f753"
@@ -39,14 +39,14 @@ source: tests/compliance_snapshots.rs
               "status": {
                 "state": "not-satisfied"
               },
-              "target-id": "sbom-cra-art-13-8",
+              "target-id": "sbom-cra-general",
               "type": "objective-id"
             },
-            "title": "SBOM-CRA-ART-13-8",
+            "title": "SBOM-CRA-GENERAL",
             "uuid": "cc10ec5d-5ae6-5283-b99c-a94766bc9e70"
           },
           {
-            "description": "Component 'lib-a' may be missing bom-ref",
+            "description": "Component 'lib-b' may be missing bom-ref",
             "related-observations": [
               {
                 "observation-uuid": "f7143079-792a-5830-8376-ff623d09d9ee"
@@ -63,27 +63,10 @@ source: tests/compliance_snapshots.rs
             "uuid": "4b947eea-3541-57a1-a42f-f42adf51a359"
           },
           {
-            "description": "Component 'lib-b' may be missing bom-ref",
-            "related-observations": [
-              {
-                "observation-uuid": "44efd5b3-f88f-5d85-b596-bafeb9f8b220"
-              }
-            ],
-            "target": {
-              "status": {
-                "state": "not-satisfied"
-              },
-              "target-id": "sbom-cra-general",
-              "type": "objective-id"
-            },
-            "title": "SBOM-CRA-GENERAL",
-            "uuid": "c480d6bd-6540-5ed1-8f9e-282a2048b95c"
-          },
-          {
             "description": "[CRA Art. 13(7) / Annex I Part II (1)] SBOM is 269 days old; keep the documented component inventory current when components change",
             "related-observations": [
               {
-                "observation-uuid": "232e4b30-9a47-5949-8f3a-13210eb3d37b"
+                "observation-uuid": "44efd5b3-f88f-5d85-b596-bafeb9f8b220"
               }
             ],
             "target": {
@@ -94,13 +77,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-CRA-SBOM-FRESHNESS",
-            "uuid": "3e4845b8-f3aa-56b7-a9fd-d1b48acb3460"
+            "uuid": "c480d6bd-6540-5ed1-8f9e-282a2048b95c"
           },
           {
             "description": "[CRA Annex I Part II (1)] No vulnerability data or vulnerability assertion found; include vulnerability information or a statement of no known vulnerabilities",
             "related-observations": [
               {
-                "observation-uuid": "795b36b1-f2d0-55a6-a3cd-d2603c4eab87"
+                "observation-uuid": "232e4b30-9a47-5949-8f3a-13210eb3d37b"
               }
             ],
             "target": {
@@ -111,44 +94,10 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-CRA-VULN-STATEMENT",
-            "uuid": "e23fd178-dce2-5bc3-b90e-f204dc1cdbe1"
+            "uuid": "3e4845b8-f3aa-56b7-a9fd-d1b48acb3460"
           }
         ],
         "observations": [
-          {
-            "collected": "2026-10-12T00:00:00Z",
-            "description": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
-            "methods": [
-              "EXAMINE"
-            ],
-            "props": [
-              {
-                "name": "severity",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "info"
-              },
-              {
-                "name": "standard-reference",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "CRA Art. 13(8) / 13(19): Support period disclosure"
-              },
-              {
-                "name": "rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-CRA-ART-13-8"
-              },
-              {
-                "name": "sarif-rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-CRA-ART-13-8"
-              }
-            ],
-            "title": "SBOM-CRA-ART-13-8",
-            "types": [
-              "finding"
-            ],
-            "uuid": "2f3b6e76-23a8-568b-94be-c6c41587f753"
-          },
           {
             "collected": "2026-10-12T00:00:00Z",
             "description": "Component 'lib-a' may be missing bom-ref",
@@ -186,7 +135,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "f7143079-792a-5830-8376-ff623d09d9ee"
+            "uuid": "2f3b6e76-23a8-568b-94be-c6c41587f753"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -225,7 +174,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "44efd5b3-f88f-5d85-b596-bafeb9f8b220"
+            "uuid": "f7143079-792a-5830-8376-ff623d09d9ee"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -259,7 +208,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "232e4b30-9a47-5949-8f3a-13210eb3d37b"
+            "uuid": "44efd5b3-f88f-5d85-b596-bafeb9f8b220"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -293,7 +242,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "795b36b1-f2d0-55a6-a3cd-d2603c4eab87"
+            "uuid": "232e4b30-9a47-5949-8f3a-13210eb3d37b"
           }
         ],
         "props": [
@@ -330,7 +279,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "info-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "4"
+            "value": "3"
           },
           {
             "name": "score",
@@ -348,13 +297,13 @@ source: tests/compliance_snapshots.rs
         },
         "start": "2026-10-12T00:00:00Z",
         "title": "sbom-tools validation assessment — EU CRA Phase 2 (2027)",
-        "uuid": "363e158c-aba2-5f2c-a82c-e5f26f931c8f"
+        "uuid": "795b36b1-f2d0-55a6-a3cd-d2603c4eab87"
       },
       {
         "description": "Validation results for EU CRA Phase 1 (2026), derived only from the supplied SBOM.",
         "findings": [
           {
-            "description": "Overall verdict for EU CRA Phase 1 (2026): 0 error(s), 1 warning(s), 4 informational finding(s).",
+            "description": "Overall verdict for EU CRA Phase 1 (2026): 0 error(s), 1 warning(s), 3 informational finding(s).",
             "target": {
               "status": {
                 "state": "satisfied"
@@ -363,10 +312,27 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "EU CRA Phase 1 (2026) compliance roll-up",
+            "uuid": "e23fd178-dce2-5bc3-b90e-f204dc1cdbe1"
+          },
+          {
+            "description": "Component 'lib-a' may be missing bom-ref",
+            "related-observations": [
+              {
+                "observation-uuid": "363e158c-aba2-5f2c-a82c-e5f26f931c8f"
+              }
+            ],
+            "target": {
+              "status": {
+                "state": "not-satisfied"
+              },
+              "target-id": "sbom-cra-general",
+              "type": "objective-id"
+            },
+            "title": "SBOM-CRA-GENERAL",
             "uuid": "fe342c04-0fe3-5202-85e7-1f423a0bbf37"
           },
           {
-            "description": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
+            "description": "Component 'lib-b' may be missing bom-ref",
             "related-observations": [
               {
                 "observation-uuid": "17dc5857-1cfb-5740-afa3-66cc7a7a1696"
@@ -376,51 +342,17 @@ source: tests/compliance_snapshots.rs
               "status": {
                 "state": "not-satisfied"
               },
-              "target-id": "sbom-cra-art-13-8",
+              "target-id": "sbom-cra-general",
               "type": "objective-id"
             },
-            "title": "SBOM-CRA-ART-13-8",
+            "title": "SBOM-CRA-GENERAL",
             "uuid": "1039793f-84fa-562b-b44b-effea742eb2f"
-          },
-          {
-            "description": "Component 'lib-a' may be missing bom-ref",
-            "related-observations": [
-              {
-                "observation-uuid": "6bed1632-5ce6-5055-8810-3bd2b1c2795d"
-              }
-            ],
-            "target": {
-              "status": {
-                "state": "not-satisfied"
-              },
-              "target-id": "sbom-cra-general",
-              "type": "objective-id"
-            },
-            "title": "SBOM-CRA-GENERAL",
-            "uuid": "303eab50-71d2-5625-ab7b-6ea487b987d1"
-          },
-          {
-            "description": "Component 'lib-b' may be missing bom-ref",
-            "related-observations": [
-              {
-                "observation-uuid": "49983ea9-77ff-572b-a5a5-2e6afb309a5c"
-              }
-            ],
-            "target": {
-              "status": {
-                "state": "not-satisfied"
-              },
-              "target-id": "sbom-cra-general",
-              "type": "objective-id"
-            },
-            "title": "SBOM-CRA-GENERAL",
-            "uuid": "e3aa9f4c-2590-513c-911e-29fbddc37de6"
           },
           {
             "description": "[CRA Art. 13(7) / Annex I Part II (1)] SBOM is 269 days old; keep the documented component inventory current when components change",
             "related-observations": [
               {
-                "observation-uuid": "813a55d8-7ffe-58f2-aea5-187cc77b6909"
+                "observation-uuid": "6bed1632-5ce6-5055-8810-3bd2b1c2795d"
               }
             ],
             "target": {
@@ -431,13 +363,13 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-CRA-SBOM-FRESHNESS",
-            "uuid": "3649f8a7-2af4-5112-91b5-9a620c4127b9"
+            "uuid": "303eab50-71d2-5625-ab7b-6ea487b987d1"
           },
           {
             "description": "[CRA Annex I Part II (1)] No vulnerability data or vulnerability assertion found; include vulnerability information or a statement of no known vulnerabilities",
             "related-observations": [
               {
-                "observation-uuid": "6050c94f-22d4-54b4-a19a-780152c865ac"
+                "observation-uuid": "49983ea9-77ff-572b-a5a5-2e6afb309a5c"
               }
             ],
             "target": {
@@ -448,44 +380,10 @@ source: tests/compliance_snapshots.rs
               "type": "objective-id"
             },
             "title": "SBOM-CRA-VULN-STATEMENT",
-            "uuid": "785135be-cd7b-56f1-8b32-48fd0388df35"
+            "uuid": "e3aa9f4c-2590-513c-911e-29fbddc37de6"
           }
         ],
         "observations": [
-          {
-            "collected": "2026-10-12T00:00:00Z",
-            "description": "[CRA Art. 13(8) / 13(19)] Consider specifying a support end date for security updates",
-            "methods": [
-              "EXAMINE"
-            ],
-            "props": [
-              {
-                "name": "severity",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "info"
-              },
-              {
-                "name": "standard-reference",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "CRA Art. 13(8) / 13(19): Support period disclosure"
-              },
-              {
-                "name": "rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-CRA-ART-13-8"
-              },
-              {
-                "name": "sarif-rule-id",
-                "ns": "https://sbom.tools/ns/oscal",
-                "value": "SBOM-CRA-ART-13-8"
-              }
-            ],
-            "title": "SBOM-CRA-ART-13-8",
-            "types": [
-              "finding"
-            ],
-            "uuid": "17dc5857-1cfb-5740-afa3-66cc7a7a1696"
-          },
           {
             "collected": "2026-10-12T00:00:00Z",
             "description": "Component 'lib-a' may be missing bom-ref",
@@ -523,7 +421,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "6bed1632-5ce6-5055-8810-3bd2b1c2795d"
+            "uuid": "363e158c-aba2-5f2c-a82c-e5f26f931c8f"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -562,7 +460,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "49983ea9-77ff-572b-a5a5-2e6afb309a5c"
+            "uuid": "17dc5857-1cfb-5740-afa3-66cc7a7a1696"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -596,7 +494,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "813a55d8-7ffe-58f2-aea5-187cc77b6909"
+            "uuid": "6bed1632-5ce6-5055-8810-3bd2b1c2795d"
           },
           {
             "collected": "2026-10-12T00:00:00Z",
@@ -630,7 +528,7 @@ source: tests/compliance_snapshots.rs
             "types": [
               "finding"
             ],
-            "uuid": "6050c94f-22d4-54b4-a19a-780152c865ac"
+            "uuid": "49983ea9-77ff-572b-a5a5-2e6afb309a5c"
           }
         ],
         "props": [
@@ -667,7 +565,7 @@ source: tests/compliance_snapshots.rs
           {
             "name": "info-count",
             "ns": "https://sbom.tools/ns/oscal",
-            "value": "4"
+            "value": "3"
           },
           {
             "name": "score",
@@ -685,9 +583,9 @@ source: tests/compliance_snapshots.rs
         },
         "start": "2026-10-12T00:00:00Z",
         "title": "sbom-tools validation assessment — EU CRA Phase 1 (2026)",
-        "uuid": "69250297-9039-5624-b550-2f620de4f613"
+        "uuid": "813a55d8-7ffe-58f2-aea5-187cc77b6909"
       }
     ],
-    "uuid": "f665dc68-20bf-57fa-a75c-64446e1a7f36"
+    "uuid": "3649f8a7-2af4-5112-91b5-9a620c4127b9"
   }
 }

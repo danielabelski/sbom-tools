@@ -5,25 +5,6 @@
 
 use super::*;
 
-/// Parse a dotted spec version ("1.6", "3.0.1") into numeric
-/// `(major, minor, patch)`. Missing trailing segments count as zero; a
-/// present-but-non-numeric segment (or an empty string) yields `None` so the
-/// caller can skip the comparison instead of false-failing synthetic
-/// documents that carry no version.
-fn parse_spec_version(v: &str) -> Option<(u64, u64, u64)> {
-    let mut parts = v.trim().split('.');
-    let major: u64 = parts.next()?.parse().ok()?;
-    let minor: u64 = match parts.next() {
-        Some(s) => s.parse().ok()?,
-        None => 0,
-    };
-    let patch: u64 = match parts.next() {
-        Some(s) => s.parse().ok()?,
-        None => 0,
-    };
-    Some((major, minor, patch))
-}
-
 impl ComplianceChecker {
     // ════════════════════════════════════════════════════════════════════
     // BSI TR-03183-2 v2.1.0 (German national SBOM guideline)
@@ -68,10 +49,10 @@ impl ComplianceChecker {
         // spec_version skips the gate rather than false-failing synthetic
         // documents.
         let minimum = match sbom.document.format {
-            SbomFormat::CycloneDx => (1, 6, 0),
-            SbomFormat::Spdx => (3, 0, 1),
+            SbomFormat::CycloneDx => crate::model::SpecVersion::new(1, 6, 0),
+            SbomFormat::Spdx => crate::model::SpecVersion::new(3, 0, 1),
         };
-        if let Some(actual) = parse_spec_version(&sbom.document.spec_version)
+        if let Some(actual) = sbom.document.spec_version_parsed()
             && actual < minimum
         {
             violations.push(Violation {

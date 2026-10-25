@@ -1381,9 +1381,21 @@ const fn default_timestamp_known() -> bool {
 }
 
 impl ProvenanceMetrics {
-    /// Calculate provenance metrics from an SBOM
+    /// Compute provenance metrics, measuring document age at `now` (the
+    /// scorer's `--as-of` instant) instead of the wall clock.
+    #[must_use]
+    pub fn from_sbom_at(sbom: &NormalizedSbom, now: chrono::DateTime<chrono::Utc>) -> Self {
+        Self::compute(sbom, now)
+    }
+
+    /// Calculate provenance metrics from an SBOM, measuring document age
+    /// against the wall clock. Use [`Self::from_sbom_at`] to pin the instant.
     #[must_use]
     pub fn from_sbom(sbom: &NormalizedSbom) -> Self {
+        Self::compute(sbom, chrono::Utc::now())
+    }
+
+    fn compute(sbom: &NormalizedSbom, now: chrono::DateTime<chrono::Utc>) -> Self {
         let doc = &sbom.document;
 
         let has_tool_creator = doc
@@ -1410,7 +1422,7 @@ impl ProvenanceMetrics {
 
         let timestamp_known = doc.has_known_timestamp();
         // Signed age: negative means the document is dated in the future.
-        let age_days_signed = (chrono::Utc::now() - doc.created).num_days();
+        let age_days_signed = (now - doc.created).num_days();
         let age_days = age_days_signed.max(0) as u32;
 
         Self {
@@ -1796,10 +1808,21 @@ pub struct CryptographyMetrics {
 }
 
 impl CryptographyMetrics {
-    /// Compute cryptography metrics from an SBOM.
+    /// Compute cryptography metrics from an SBOM, judging certificate expiry
+    /// against the wall clock. Use [`Self::from_sbom_at`] to pin the instant.
     #[must_use]
     pub fn from_sbom(sbom: &NormalizedSbom) -> Self {
+        Self::from_sbom_at(sbom, chrono::Utc::now())
+    }
+
+    /// Compute cryptography metrics, judging certificate expiry at `now`
+    /// (the scorer's `--as-of` instant).
+    #[must_use]
+    pub fn from_sbom_at(sbom: &NormalizedSbom, now: chrono::DateTime<chrono::Utc>) -> Self {
         let mut m = Self::default();
+        // References only earn credit when they resolve inside the SBOM.
+        let index = sbom.build_index();
+        let resolves = |r: &str| index.resolve_bom_ref(r).is_some();
 
         for comp in sbom.components.values() {
             if comp.component_type != ComponentType::Cryptographic {
@@ -1854,12 +1877,16 @@ impl CryptographyMetrics {
                     );
                     // A classical public-key family (RSA/ECDSA/DH/…) is
                     // quantum-vulnerable on the family alone — real CBOMs
-                    // rarely set nistQuantumSecurityLevel=0.
-                    if cls.class == AlgorithmClass::ClassicalQuantumVulnerable
-                        || algo.is_some_and(|a| {
-                            a.is_classical_quantum_vulnerable()
-                                || a.nist_quantum_security_level == Some(0)
-                        })
+                    // rarely set nistQuantumSecurityLevel=0. A broken
+                    // algorithm (RSA-1024, …) is counted as weak below, not
+                    // here as well: counting it twice inflated the
+                    // quantum-vulnerable figure past what `validate` reports.
+                    if cls.class != AlgorithmClass::Broken
+                        && (cls.class == AlgorithmClass::ClassicalQuantumVulnerable
+                            || algo.is_some_and(|a| {
+                                a.is_classical_quantum_vulnerable()
+                                    || a.nist_quantum_security_level == Some(0)
+                            }))
                     {
                         m.quantum_vulnerable_count += 1;
                     } else if matches!(cls.class, AlgorithmClass::PostQuantum(_))
@@ -1880,12 +1907,12 @@ impl CryptographyMetrics {
                         if cert.not_valid_before.is_some() && cert.not_valid_after.is_some() {
                             m.certs_with_validity_dates += 1;
                         }
-                        if cert.signature_algorithm_ref.is_some() {
+                        if cert.signature_algorithm_refs().into_iter().any(&resolves) {
                             m.certs_with_signature_algo_ref += 1;
                         }
-                        if cert.is_expired() {
+                        if cert.is_expired_at(now) {
                             m.expired_certificates += 1;
-                        } else if cert.is_expiring_soon(90) {
+                        } else if cert.is_expiring_soon_at(90, now) {
                             m.expiring_soon_certificates += 1;
                         }
                     }
@@ -1902,7 +1929,7 @@ impl CryptographyMetrics {
                         if mat.creation_date.is_some() || mat.activation_date.is_some() {
                             m.keys_with_lifecycle_dates += 1;
                         }
-                        if mat.algorithm_ref.is_some() {
+                        if mat.algorithm_ref.as_deref().is_some_and(resolves) {
                             m.keys_with_algorithm_ref += 1;
                         }
                         if mat.state == Some(CryptoMaterialState::Compromised) {
